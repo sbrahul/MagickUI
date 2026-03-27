@@ -34,7 +34,6 @@ export function BlurTab() {
         </TabsTrigger>
       </TabsList>
 
-      {/* ── Blur ── */}
       <TabsContent value="blur" className="space-y-3">
 
         <OpSection label="Gaussian Blur"
@@ -74,7 +73,6 @@ export function BlurTab() {
 
       </TabsContent>
 
-      {/* ── Sharpen ── */}
       <TabsContent value="sharpen" className="space-y-3">
 
         <OpSection label="Sharpen"

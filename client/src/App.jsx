@@ -31,7 +31,6 @@ export default function App() {
 
   return (
     <div className="h-svh flex flex-col bg-gray-950 text-white overflow-hidden">
-      {/* Header */}
       <header className="flex items-center px-4 h-12 border-b border-white/10 flex-shrink-0">
         <span className="font-bold tracking-tight text-sm">MagickUI</span>
         <button
@@ -43,14 +42,11 @@ export default function App() {
         </button>
       </header>
 
-      {/* Main area */}
       <div className="flex flex-1 overflow-hidden min-h-0">
-        {/* Desktop sidebar (hidden on mobile) */}
         <div className="hidden md:flex flex-shrink-0">
           <Sidebar />
         </div>
 
-        {/* Preview */}
         <main className="flex-1 flex flex-col overflow-hidden p-2 md:p-3 min-h-0">
           <PreviewPanel />
         </main>

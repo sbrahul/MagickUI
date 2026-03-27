@@ -51,7 +51,6 @@ const DEFAULT_OUTPUT = {
 }
 
 export const useImageStore = create((set, get) => ({
-  // File state
   originalFile: null,
   originalBlobUrl: null,
   originalDimensions: null,
@@ -66,15 +65,12 @@ export const useImageStore = create((set, get) => ({
   isLivePreviewing: false,
   livePreviewEnabled: false,
 
-  // App state
   capabilities: null,
   showOriginal: true,
 
-  // Operations
   ops: { ...DEFAULT_OPS },
   output: { ...DEFAULT_OUTPUT },
 
-  // ── Actions ──────────────────────────────────────────────────
 
   setFile(file) {
     const prev = get().originalBlobUrl
@@ -134,7 +130,6 @@ export const useImageStore = create((set, get) => ({
 
   toggleLivePreview() {
     const next = !get().livePreviewEnabled
-    // When disabling, clear any existing live preview
     if (!next) {
       const prev = get().livePreviewUrl
       if (prev) URL.revokeObjectURL(prev)
@@ -151,7 +146,6 @@ export const useImageStore = create((set, get) => ({
   setProcessed(blobUrl, meta) {
     const prev = get().processedBlobUrl
     if (prev) URL.revokeObjectURL(prev)
-    // Clear the live preview — the applied result takes over
     const prevLive = get().livePreviewUrl
     if (prevLive) URL.revokeObjectURL(prevLive)
     set({ processedBlobUrl: blobUrl, processedMeta: meta, livePreviewUrl: null, isLivePreviewing: false, showOriginal: false, errorDetail: null })

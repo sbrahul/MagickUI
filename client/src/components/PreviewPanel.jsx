@@ -18,7 +18,6 @@ export function PreviewPanel() {
 
   // Priority: live preview > applied result > original
   const src = livePreviewUrl ?? (showOriginal ? originalBlobUrl : processedBlobUrl)
-  // Toggling before/after only makes sense when there's an applied result and no live preview
   const canToggle = !!processedBlobUrl && !isLivePreviewing
 
   if (!originalBlobUrl) {
@@ -31,7 +30,6 @@ export function PreviewPanel() {
 
   return (
     <div className="relative flex-1 flex flex-col overflow-hidden bg-[#111] rounded-xl">
-      {/* Zoom controls + live preview toggle */}
       <div className="absolute top-3 right-3 z-10 flex gap-1">
         <button
           onClick={toggleLivePreview}
@@ -65,7 +63,6 @@ export function PreviewPanel() {
         </button>
       </div>
 
-      {/* Live preview badge */}
       {isLivePreviewing && (
         <div className="absolute top-3 left-3 z-10 px-2 py-1 rounded bg-blue-600/80 text-xs text-white flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
@@ -73,7 +70,6 @@ export function PreviewPanel() {
         </div>
       )}
 
-      {/* Before/After toggle badge — only when live preview is off */}
       {canToggle && (
         <button
           onClick={togglePreview}
@@ -83,7 +79,6 @@ export function PreviewPanel() {
         </button>
       )}
 
-      {/* Image with fade transition */}
       <div className="flex-1 overflow-auto flex items-center justify-center">
         <AnimatePresence mode="wait">
           <motion.img
@@ -105,7 +100,6 @@ export function PreviewPanel() {
         </AnimatePresence>
       </div>
 
-      {/* Meta bar */}
       {!showOriginal && !isLivePreviewing && processedMeta && (
         <div className="px-4 py-2 bg-black/40 text-xs text-gray-400 flex gap-4">
           <span>{processedMeta.format?.toUpperCase()}</span>
@@ -113,7 +107,6 @@ export function PreviewPanel() {
         </div>
       )}
 
-      {/* Loading overlay */}
       <AnimatePresence>
         {isProcessing && (
           <motion.div

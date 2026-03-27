@@ -83,15 +83,7 @@ function validateColor(key, val) {
   return val
 }
 
-/**
- * Validates and cleans the ops object and output options.
- * @param {unknown} ops - raw parsed JSON ops
- * @param {{ format, quality, strip, interlace, losslessWebp }} output
- * @returns {{ ops: object, output: object }}
- * @throws {{ status: 400, message: string }}
- */
 export function validate(ops, output) {
-  // ops must be a plain object
   if (!ops || typeof ops !== 'object' || Array.isArray(ops)) {
     err('ops must be a plain object')
   }
@@ -105,7 +97,6 @@ export function validate(ops, output) {
 
   const v = {}
 
-  // ── Boolean flags ──────────────────────────────────────────────
   const boolKeys = ['autoOrient','flip','flop','trim','grayscale','negate',
                     'normalize','equalize','whiteBalance','despeckle',
                     'gaussianBlur','sharpen','unsharp','median',
@@ -117,12 +108,10 @@ export function validate(ops, output) {
     if (k in ops) v[k] = Boolean(ops[k])
   }
 
-  // ── Numeric params ─────────────────────────────────────────────
   for (const key of Object.keys(RANGES)) {
     if (key in ops) v[key] = clampNum(key, ops[key])
   }
 
-  // ── Enum params ────────────────────────────────────────────────
   if ('resizeMode' in ops) {
     if (!RESIZE_MODES.includes(ops.resizeMode)) err(`resizeMode: unknown value "${ops.resizeMode}"`)
     v.resizeMode = ops.resizeMode
@@ -136,18 +125,16 @@ export function validate(ops, output) {
     v.colorspace = ops.colorspace
   }
 
-  // ── Color params ───────────────────────────────────────────────
   if ('borderColor' in ops) v.borderColor = validateColor('borderColor', ops.borderColor)
   if ('rotateBg'    in ops) v.rotateBg    = validateColor('rotateBg', ops.rotateBg)
   if ('annotateColor' in ops) v.annotateColor = validateColor('annotateColor', ops.annotateColor)
 
-  // ── Free text ──────────────────────────────────────────────────
+
   if ('annotateText' in ops) {
     if (!TEXT_RE.test(ops.annotateText)) err('annotateText: invalid characters or too long')
     v.annotateText = ops.annotateText
   }
 
-  // ── Crop sub-object ────────────────────────────────────────────
   if (ops.crop && typeof ops.crop === 'object' && !Array.isArray(ops.crop)) {
     v.crop = {
       x:      clampNum('cropX',      ops.crop.x      ?? 0),
@@ -157,7 +144,6 @@ export function validate(ops, output) {
     }
   }
 
-  // ── Output validation ──────────────────────────────────────────
   if (!OUTPUT_FORMATS.includes(output.format)) err(`outputFormat: unknown "${output.format}"`)
   const quality = clampNum('quality', output.quality ?? 85)
 

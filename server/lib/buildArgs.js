@@ -1,8 +1,5 @@
 import { execFile } from 'child_process'
 
-/**
- * Returns [width, height] of the image at the given path.
- */
 function identifyDimensions(inputPath) {
   return new Promise((resolve, reject) => {
     execFile('magick', ['identify', '-format', '%w %h', inputPath],
@@ -35,10 +32,8 @@ function identifyDimensions(inputPath) {
 export async function buildArgs(ops, inputPath, outputPath, output) {
   const args = [inputPath]
 
-  // ── Stage 1: Auto-orient ───────────────────────────────────────
   if (ops.autoOrient) args.push('-auto-orient')
 
-  // ── Stage 2: Crop ──────────────────────────────────────────────
   if (ops.crop) {
     const [imgW, imgH] = await identifyDimensions(inputPath)
     const cropW = Math.max(1, Math.round(ops.crop.width  * imgW))
@@ -48,7 +43,6 @@ export async function buildArgs(ops, inputPath, outputPath, output) {
     args.push('-crop', `${cropW}x${cropH}+${cropX}+${cropY}`, '+repage')
   }
 
-  // ── Stage 3: Resize ────────────────────────────────────────────
   const rw = ops.resizeWidth
   const rh = ops.resizeHeight
   const mode = ops.resizeMode ?? 'fit'
@@ -69,7 +63,7 @@ export async function buildArgs(ops, inputPath, outputPath, output) {
     }
   }
 
-  // ── Stage 4: Geometry ──────────────────────────────────────────
+
   const rotate = ops.rotate ?? 0
   if (rotate !== 0) {
     args.push('-background', ops.rotateBg ?? 'none', '-rotate', String(rotate))
@@ -78,7 +72,7 @@ export async function buildArgs(ops, inputPath, outputPath, output) {
   if (ops.flop)  args.push('-flop')
   if (ops.trim)  args.push('-trim', '+repage')
 
-  // ── Stage 5: Color / Tone ──────────────────────────────────────
+
   if (ops.brightnessContrast) {
     const b = ops.brightnessContrastB ?? 0
     const c = ops.brightnessContrastC ?? 0
@@ -111,7 +105,7 @@ export async function buildArgs(ops, inputPath, outputPath, output) {
     args.push('-colorspace', ops.colorspace)
   }
 
-  // ── Stage 6: Blur / Sharpen ────────────────────────────────────
+
   if (ops.gaussianBlur) {
     args.push('-gaussian-blur', `0x${ops.gaussianBlurSigma ?? 2}`)
   }
@@ -133,7 +127,7 @@ export async function buildArgs(ops, inputPath, outputPath, output) {
     args.push('-wavelet-denoise', `${ops.waveletDenoise ?? 5}%`)
   }
 
-  // ── Stage 7: Effects ───────────────────────────────────────────
+
   if (ops.charcoal) args.push('-charcoal', String(ops.charcoalRadius ?? 2))
   if (ops.emboss)   args.push('-emboss',   `0x${ops.embossSigma ?? 1}`)
   if (ops.edge)     args.push('-edge',     String(ops.edgeRadius ?? 1))
@@ -151,14 +145,14 @@ export async function buildArgs(ops, inputPath, outputPath, output) {
     args.push('-background', 'black', '-vignette', `0x${ops.vignetteSigma ?? 10}`)
   }
 
-  // ── Stage 8: Border ────────────────────────────────────────────
+
   if (ops.border) {
     const bw = ops.borderWidth ?? 10
     const bc = ops.borderColor ?? '#000000'
     args.push('-bordercolor', bc, '-border', `${bw}x${bw}`)
   }
 
-  // ── Stage 9: Annotate ──────────────────────────────────────────
+
   if (ops.annotate && ops.annotateText) {
     const gravity  = ops.gravity       ?? 'NorthWest'
     const size     = ops.annotateSize  ?? 36
@@ -168,7 +162,6 @@ export async function buildArgs(ops, inputPath, outputPath, output) {
     const y        = ops.annotateY    ?? 10
     const hex      = ops.annotateColor ?? '#ffffff'
 
-    // Parse hex color to rgba()
     const r = parseInt(hex.slice(1, 3), 16)
     const g = parseInt(hex.slice(3, 5), 16)
     const b = parseInt(hex.slice(5, 7), 16)
@@ -184,7 +177,7 @@ export async function buildArgs(ops, inputPath, outputPath, output) {
     )
   }
 
-  // ── Stage 10: Output ───────────────────────────────────────────
+
   if (output.strip) args.push('-strip')
   if (output.interlace && output.format === 'jpeg') args.push('-interlace', 'JPEG')
   if (output.losslessWebp && output.format === 'webp') {

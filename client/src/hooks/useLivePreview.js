@@ -16,18 +16,15 @@ export function useLivePreview() {
   const abortRef  = useRef(null)
 
   useEffect(() => {
-    // Nothing to do without a file, while Apply is running, or if disabled
     if (!originalFile || isProcessing || !livePreviewEnabled) {
       clearTimeout(timerRef.current)
       abortRef.current?.abort()
       return
     }
 
-    // Debounce: clear any pending timer
     clearTimeout(timerRef.current)
 
     timerRef.current = setTimeout(async () => {
-      // Cancel any previous live-preview request
       abortRef.current?.abort()
       const ac = new AbortController()
       abortRef.current = ac

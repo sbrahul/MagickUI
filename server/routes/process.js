@@ -9,7 +9,6 @@ import { buildArgs }           from '../lib/buildArgs.js'
 
 export const router = Router()
 
-// ── Capabilities ────────────────────────────────────────────────────────────
 
 let cachedCapabilities = null
 
@@ -24,7 +23,6 @@ async function probeCapabilities() {
       const lines = stdout.split('\n')
       const inputFormats  = []
       const outputFormats = []
-      // Format names to map to user-facing names
       const WANTED = new Map([
         ['JPEG','jpeg'], ['JPG','jpeg'], ['PNG','png'], ['WEBP','webp'],
         ['AVIF','avif'], ['TIFF','tiff'], ['TIF','tiff'], ['GIF','gif'],
@@ -55,15 +53,9 @@ router.get('/capabilities', (_req, res) => {
   res.json(cachedCapabilities ?? { inputFormats: [], outputFormats: [] })
 })
 
-// ── Concurrency limiter ─────────────────────────────────────────────────────
-// Prevents server resource exhaustion when many clients submit jobs at once.
-// Excess requests receive a 503 so the client can retry rather than queuing
-// indefinitely and starving memory.
-
 const MAX_CONCURRENT = Number(process.env.MAX_CONCURRENT_OPS ?? 4)
 let activeOps = 0
 
-// ── MIME map ────────────────────────────────────────────────────────────────
 
 const MIME_FROM_FORMAT = {
   jpeg: 'image/jpeg',
@@ -74,7 +66,6 @@ const MIME_FROM_FORMAT = {
   gif:  'image/gif',
 }
 
-// ── Process ─────────────────────────────────────────────────────────────────
 
 router.post('/process', async (req, res) => {
   if (activeOps >= MAX_CONCURRENT) {
@@ -83,7 +74,6 @@ router.post('/process', async (req, res) => {
   activeOps++
   const tmpDir = join('/tmp', randomUUID())
   try {
-    // 1. Parse + validate
     let ops, output
     try {
       const rawOps = JSON.parse(req.body.ops || '{}')
@@ -99,16 +89,13 @@ router.post('/process', async (req, res) => {
       return res.status(e.status ?? 400).json({ message: e.message ?? 'Invalid parameters' })
     }
 
-    // 2. Determine extension from magic bytes (already validated by multer fileFilter)
     const ext     = req.file.detectedExt
     const inPath  = join(tmpDir, `input.${ext}`)
     const outPath = join(tmpDir, `output.${output.format}`)
 
-    // 3. Write uploaded file to tmpdir
     await mkdir(tmpDir, { recursive: true })
     await writeFile(inPath, req.file.buffer)
 
-    // 4. Build args + spawn
     const args = await buildArgs(ops, inPath, outPath, output)
     await new Promise((resolve, reject) => {
       const proc = spawn('magick', args, { timeout: 120_000 })
@@ -121,7 +108,6 @@ router.post('/process', async (req, res) => {
       proc.on('error', err => reject({ status: 500, message: err.message, stderr }))
     })
 
-    // 5. Stream result
     const result = await readFile(outPath)
     const mime   = MIME_FROM_FORMAT[output.format] ?? 'application/octet-stream'
     res

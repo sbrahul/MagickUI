@@ -20,7 +20,6 @@ export function ColorTab() {
   return (
     <div className="space-y-3">
 
-      {/* Brightness / Contrast */}
       <OpSection label="Brightness / Contrast"
         enabled={!!ops.brightnessContrast}
         onToggle={v => updateOp('brightnessContrast', v ? { b: 0, c: 0 } : null)}>
@@ -36,7 +35,6 @@ export function ColorTab() {
         )}
       </OpSection>
 
-      {/* HSB Adjust (Modulate) */}
       <OpSection label="HSB Adjust"
         enabled={!!ops.modulate}
         onToggle={v => updateOp('modulate', v ? { brightness: 100, saturation: 100, hue: 100 } : null)}>
@@ -55,7 +53,6 @@ export function ColorTab() {
         )}
       </OpSection>
 
-      {/* Gamma */}
       <OpSection label="Gamma"
         enabled={ops.gamma !== null && ops.gamma !== undefined}
         onToggle={v => updateOp('gamma', v ? 1.0 : null)}>
@@ -65,7 +62,6 @@ export function ColorTab() {
         )}
       </OpSection>
 
-      {/* Levels */}
       <OpSection label="Levels"
         enabled={!!ops.level}
         onToggle={v => updateOp('level', v ? { black: 0, white: 100, gamma: 1.0 } : null)}>
@@ -84,7 +80,6 @@ export function ColorTab() {
         )}
       </OpSection>
 
-      {/* Binary toggles */}
       <OpSection label="Adjustments">
         <div className="space-y-2">
           {BINARY_OPS.map(({ key, label }) => (
@@ -96,7 +91,6 @@ export function ColorTab() {
         </div>
       </OpSection>
 
-      {/* Sepia Tone */}
       <OpSection label="Sepia Tone"
         enabled={ops.sepiaTone !== null && ops.sepiaTone !== undefined}
         onToggle={v => updateOp('sepiaTone', v ? 80 : null)}>
@@ -106,7 +100,6 @@ export function ColorTab() {
         )}
       </OpSection>
 
-      {/* Colorspace */}
       <OpSection label="Colorspace"
         enabled={!!ops.colorspace}
         onToggle={v => updateOp('colorspace', v ? 'Gray' : null)}>
