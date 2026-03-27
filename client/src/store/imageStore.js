@@ -54,6 +54,7 @@ export const useImageStore = create((set, get) => ({
   // File state
   originalFile: null,
   originalBlobUrl: null,
+  originalDimensions: null,
   processedBlobUrl: null,
   processedMeta: null,
   isProcessing: false,
@@ -75,15 +76,24 @@ export const useImageStore = create((set, get) => ({
     if (prev) URL.revokeObjectURL(prev)
     const prevP = get().processedBlobUrl
     if (prevP) URL.revokeObjectURL(prevP)
+    const blobUrl = file ? URL.createObjectURL(file) : null
     set({
       originalFile: file,
-      originalBlobUrl: file ? URL.createObjectURL(file) : null,
+      originalBlobUrl: blobUrl,
+      originalDimensions: null,
       processedBlobUrl: null,
       processedMeta: null,
       showOriginal: true,
       errorDetail: null,
       ops: { ...DEFAULT_OPS },
     })
+    if (blobUrl) {
+      const img = new Image()
+      img.onload = () => {
+        useImageStore.setState({ originalDimensions: { width: img.naturalWidth, height: img.naturalHeight } })
+      }
+      img.src = blobUrl
+    }
   },
 
   setCapabilities(caps) { set({ capabilities: caps }) },
@@ -121,5 +131,12 @@ export const useImageStore = create((set, get) => ({
     set(state => ({
       showOriginal: state.processedBlobUrl ? !state.showOriginal : true,
     }))
+  },
+
+  cleanup() {
+    const { originalBlobUrl, processedBlobUrl } = get()
+    if (originalBlobUrl) URL.revokeObjectURL(originalBlobUrl)
+    if (processedBlobUrl) URL.revokeObjectURL(processedBlobUrl)
+    set({ originalBlobUrl: null, processedBlobUrl: null })
   },
 }))

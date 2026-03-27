@@ -1,3 +1,4 @@
+import { X } from 'lucide-react'
 import { useImageStore } from '../store/imageStore.js'
 import { UploadZone }    from './UploadZone.jsx'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs.jsx'
@@ -59,8 +60,16 @@ export function Sidebar() {
       </div>
 
       {errorDetail && (
-        <div className="p-3 border-t border-red-900/50 bg-red-950/30 text-xs text-red-300 max-h-32 overflow-y-auto font-mono whitespace-pre-wrap">
-          {errorDetail.stderr || errorDetail.message}
+        <div className="p-3 border-t border-red-900/50 bg-red-950/30 text-xs text-red-300 max-h-32 overflow-y-auto font-mono relative">
+          <button
+            onClick={() => useImageStore.getState().setError(null)}
+            className="absolute top-2 right-2 text-red-400 hover:text-red-200"
+            aria-label="Dismiss error"
+          >
+            <X size={12} />
+          </button>
+          <p className="font-sans font-medium mb-1 text-red-400 pr-5">{errorDetail.message}</p>
+          {errorDetail.stderr && <pre className="whitespace-pre-wrap">{errorDetail.stderr}</pre>}
         </div>
       )}
     </aside>

@@ -3,3 +3,19 @@
 :root {
   color-scheme: dark;
 }
+
+.light {
+  color-scheme: light;
+}
+
+.light body {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.light .bg-gray-950 { background-color: #e2e8f0 !important; }
+.light .bg-gray-900 { background-color: #f8fafc !important; }
+.light .text-white  { color: #0f172a !important; }
+.light .text-gray-300, .light .text-gray-400 { color: #475569 !important; }
+.light .border-white\/10 { border-color: #cbd5e1 !important; }
+.light .bg-white\/10 { background-color: #0f172a14 !important; }
