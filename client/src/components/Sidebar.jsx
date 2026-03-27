@@ -1,6 +1,7 @@
 import { X } from 'lucide-react'
 import { useImageStore } from '../store/imageStore.js'
 import { UploadZone }    from './UploadZone.jsx'
+import { FormatPicker }  from './FormatPicker.jsx'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs.jsx'
 import { TransformTab }  from './tabs/TransformTab.jsx'
 import { ColorTab }      from './tabs/ColorTab.jsx'
@@ -27,6 +28,8 @@ export function Sidebar() {
       <div className="p-4 border-b border-white/10">
         <UploadZone />
       </div>
+
+      <FormatPicker />
 
       <Tabs defaultValue="transform" className="flex-1 flex flex-col overflow-hidden">
         <TabsList className="flex px-2 pt-2 gap-1 bg-transparent flex-wrap">

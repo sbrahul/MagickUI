@@ -1,54 +1,16 @@
 import { Download } from 'lucide-react'
 import { useImageStore } from '../../store/imageStore.js'
-import { OpSection }     from '../ui/op-section.jsx'
 import { LabeledSlider } from '../ui/labeled-slider.jsx'
 import { Switch }        from '../ui/switch.jsx'
-import { cn }            from '../../lib/utils.js'
-
-const FORMATS = [
-  { value: 'jpeg', label: 'JPEG' },
-  { value: 'png',  label: 'PNG'  },
-  { value: 'webp', label: 'WebP' },
-  { value: 'avif', label: 'AVIF' },
-  { value: 'tiff', label: 'TIFF' },
-  { value: 'gif',  label: 'GIF'  },
-]
 
 export function OutputTab() {
   const output           = useImageStore(s => s.output)
   const updateOutput     = useImageStore(s => s.updateOutput)
-  const capabilities     = useImageStore(s => s.capabilities)
   const processedBlobUrl = useImageStore(s => s.processedBlobUrl)
   const processedMeta    = useImageStore(s => s.processedMeta)
 
-  const supported = capabilities?.outputFormats ?? []
-
   return (
     <div className="space-y-3">
-
-      {/* Format selector */}
-      <OpSection label="Output Format">
-        <div className="grid grid-cols-3 gap-2">
-          {FORMATS.map(f => {
-            const available = supported.length === 0 || supported.includes(f.value)
-            return (
-              <button key={f.value} disabled={!available}
-                onClick={() => updateOutput('format', f.value)}
-                title={!available ? 'Not supported by this ImageMagick build' : undefined}
-                className={cn(
-                  'py-1.5 rounded text-sm border transition-colors',
-                  output.format === f.value
-                    ? 'border-blue-500 bg-blue-600 text-white'
-                    : available
-                    ? 'border-white/20 text-gray-300 hover:border-white/50'
-                    : 'border-white/10 text-gray-600 cursor-not-allowed opacity-40'
-                )}>
-                {f.label}
-              </button>
-            )
-          })}
-        </div>
-      </OpSection>
 
       {/* Quality */}
       {['jpeg', 'webp', 'avif'].includes(output.format) && (
