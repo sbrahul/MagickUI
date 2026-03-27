@@ -35,7 +35,7 @@ export function BlurTab() {
       </TabsList>
 
       {/* ── Blur ── */}
-      <TabsContent value="blur" className="space-y-4">
+      <TabsContent value="blur" className="space-y-3">
 
         <OpSection label="Gaussian Blur"
           enabled={!!ops.gaussianBlur}
@@ -75,7 +75,7 @@ export function BlurTab() {
       </TabsContent>
 
       {/* ── Sharpen ── */}
-      <TabsContent value="sharpen" className="space-y-4">
+      <TabsContent value="sharpen" className="space-y-3">
 
         <OpSection label="Sharpen"
           enabled={!!ops.sharpen}

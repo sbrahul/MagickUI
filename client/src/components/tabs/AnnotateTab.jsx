@@ -38,7 +38,7 @@ export function AnnotateTab() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
 
       {/* Text */}
       <OpSection label="Text">

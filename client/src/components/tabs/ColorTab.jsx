@@ -18,7 +18,7 @@ export function ColorTab() {
   const updateOp = useImageStore(s => s.updateOp)
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
 
       {/* Brightness / Contrast */}
       <OpSection label="Brightness / Contrast"

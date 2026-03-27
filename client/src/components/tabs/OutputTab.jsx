@@ -24,7 +24,7 @@ export function OutputTab() {
   const supported = capabilities?.outputFormats ?? []
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
 
       {/* Format selector */}
       <OpSection label="Output Format">
