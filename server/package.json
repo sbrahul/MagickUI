@@ -1,0 +1,14 @@
+{
+  "name": "magickstudio-server",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "helmet": "^8.0.0",
+    "multer": "^2.1.1"
+  }
+}
