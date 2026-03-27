@@ -1,31 +1,5 @@
 services:
   web:
     build: .
-    # To run behind a reverse proxy on the same host, replace `ports` with
-    # `expose` and put both containers on a shared network so the proxy can
-    # reach this service by name (e.g. http://web:3000) without binding to
-    # a host port.
     ports:
-      - "${BIND_PORT:-3000}:3000"
-    environment:
-      PORT: "3000"
-      NODE_ENV: production
-      MAX_FILE_SIZE_MB: "${MAX_FILE_SIZE_MB:-50}"
-      # Maximum number of ImageMagick jobs that can run in parallel.
-      # Excess requests receive a 503. Tune to your CPU core count.
-      MAX_CONCURRENT_OPS: "${MAX_CONCURRENT_OPS:-4}"
-      # Set to "true" when running behind a reverse proxy (nginx, Traefik, etc.).
-      REVERSE_PROXY: "${REVERSE_PROXY:-false}"
-      # Your site's public hostname. When set, CORS is restricted to https://{DOMAIN_NAME}.
-      # Leave unset to allow any origin (default, fine for direct/local access).
-      # Example: images.example.com
-      DOMAIN_NAME: "${DOMAIN_NAME:-}"
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-    ulimits:
-      nproc: 256
-      nofile:
-        soft: 4096
-        hard: 4096
+      - "${BIND_PORT:-8080}:80"

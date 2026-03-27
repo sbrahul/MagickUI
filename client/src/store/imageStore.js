@@ -16,28 +16,21 @@ const DEFAULT_OPS = {
   grayscale: false,
   negate: false,
   normalize: false,
-  equalize: false,
-  whiteBalance: false,
+  autoLevel: false,
+  autoGamma: false,
   sepiaTone: null,
   colorspace: null,
   gaussianBlur: null,
+  bilateralBlur: null,
+  motionBlur: null,
   sharpen: null,
-  unsharp: null,
-  median: null,
-  despeckle: false,
-  waveletDenoise: null,
+  adaptiveSharpen: null,
   charcoal: null,
-  emboss: null,
   edge: null,
-  sketch: null,
-  spread: null,
-  swirl: null,
-  wave: null,
-  implode: null,
-  posterize: null,
   solarize: null,
   paint: null,
   vignette: null,
+  wave: null,
   border: null,
   annotate: null,
 }
@@ -65,7 +58,6 @@ export const useImageStore = create((set, get) => ({
   isLivePreviewing: false,
   livePreviewEnabled: false,
 
-  capabilities: null,
   showOriginal: true,
 
   ops: { ...DEFAULT_OPS },
@@ -100,8 +92,6 @@ export const useImageStore = create((set, get) => ({
       img.src = blobUrl
     }
   },
-
-  setCapabilities(caps) { set({ capabilities: caps }) },
 
   updateOp(key, value) {
     set(state => ({ ops: { ...state.ops, [key]: value } }))

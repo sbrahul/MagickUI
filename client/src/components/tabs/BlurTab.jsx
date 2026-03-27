@@ -1,7 +1,6 @@
 import { useImageStore } from '../../store/imageStore.js'
 import { OpSection }     from '../ui/op-section.jsx'
 import { LabeledSlider } from '../ui/labeled-slider.jsx'
-import { Switch }        from '../ui/switch.jsx'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs.jsx'
 
 export function BlurTab() {
@@ -10,14 +9,13 @@ export function BlurTab() {
 
   function clearBlur() {
     updateOp('gaussianBlur', null)
-    updateOp('median', null)
-    updateOp('waveletDenoise', null)
-    updateOp('despeckle', false)
+    updateOp('bilateralBlur', null)
+    updateOp('motionBlur', null)
   }
 
   function clearSharpen() {
     updateOp('sharpen', null)
-    updateOp('unsharp', null)
+    updateOp('adaptiveSharpen', null)
   }
 
   return (
@@ -46,30 +44,39 @@ export function BlurTab() {
           )}
         </OpSection>
 
-        <OpSection label="Median Filter"
-          enabled={!!ops.median}
-          onToggle={v => updateOp('median', v ? { radius: 3 } : null)}>
-          {ops.median && (
-            <LabeledSlider label="Radius" value={ops.median.radius}
-              onChange={v => updateOp('median', { radius: v })}
-              min={1} max={20} />
+        <OpSection label="Bilateral Blur"
+          enabled={!!ops.bilateralBlur}
+          onToggle={v => updateOp('bilateralBlur', v ? { width: 5, height: 5 } : null)}>
+          {ops.bilateralBlur && (
+            <div className="space-y-3">
+              <p className="text-[11px] text-gray-500">Edge-preserving blur</p>
+              <LabeledSlider label="Width" value={ops.bilateralBlur.width}
+                onChange={v => updateOp('bilateralBlur', { ...ops.bilateralBlur, width: v })}
+                min={1} max={30} />
+              <LabeledSlider label="Height" value={ops.bilateralBlur.height}
+                onChange={v => updateOp('bilateralBlur', { ...ops.bilateralBlur, height: v })}
+                min={1} max={30} />
+            </div>
           )}
         </OpSection>
 
-        <OpSection label="Wavelet Denoise"
-          enabled={!!ops.waveletDenoise}
-          onToggle={v => updateOp('waveletDenoise', v ? { threshold: 5 } : null)}>
-          {ops.waveletDenoise && (
-            <LabeledSlider label="Threshold" value={ops.waveletDenoise.threshold}
-              onChange={v => updateOp('waveletDenoise', { threshold: v })}
-              min={0} max={30} step={0.5} unit="%" />
+        <OpSection label="Motion Blur"
+          enabled={!!ops.motionBlur}
+          onToggle={v => updateOp('motionBlur', v ? { radius: 10, sigma: 10, angle: -90 } : null)}>
+          {ops.motionBlur && (
+            <div className="space-y-3">
+              <LabeledSlider label="Radius" value={ops.motionBlur.radius}
+                onChange={v => updateOp('motionBlur', { ...ops.motionBlur, radius: v })}
+                min={1} max={50} />
+              <LabeledSlider label="Sigma" value={ops.motionBlur.sigma}
+                onChange={v => updateOp('motionBlur', { ...ops.motionBlur, sigma: v })}
+                min={1} max={50} />
+              <LabeledSlider label="Angle" value={ops.motionBlur.angle}
+                onChange={v => updateOp('motionBlur', { ...ops.motionBlur, angle: v })}
+                min={-180} max={180} />
+            </div>
           )}
         </OpSection>
-
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-300">Despeckle</span>
-          <Switch checked={ops.despeckle} onCheckedChange={v => updateOp('despeckle', v)} />
-        </div>
 
       </TabsContent>
 
@@ -85,23 +92,15 @@ export function BlurTab() {
           )}
         </OpSection>
 
-        <OpSection label="Unsharp Mask"
-          enabled={!!ops.unsharp}
-          onToggle={v => updateOp('unsharp', v ? { radius: 0, sigma: 1, amount: 1, threshold: 0.05 } : null)}>
-          {ops.unsharp && (
+        <OpSection label="Adaptive Sharpen"
+          enabled={!!ops.adaptiveSharpen}
+          onToggle={v => updateOp('adaptiveSharpen', v ? { sigma: 1 } : null)}>
+          {ops.adaptiveSharpen && (
             <div className="space-y-3">
-              <LabeledSlider label="Radius" value={ops.unsharp.radius}
-                onChange={v => updateOp('unsharp', { ...ops.unsharp, radius: v })}
-                min={0} max={20} step={0.5} />
-              <LabeledSlider label="Sigma" value={ops.unsharp.sigma}
-                onChange={v => updateOp('unsharp', { ...ops.unsharp, sigma: v })}
+              <p className="text-[11px] text-gray-500">Sharpens near edges only</p>
+              <LabeledSlider label="Sigma" value={ops.adaptiveSharpen.sigma}
+                onChange={v => updateOp('adaptiveSharpen', { sigma: v })}
                 min={0.1} max={20} step={0.1} />
-              <LabeledSlider label="Amount" value={ops.unsharp.amount}
-                onChange={v => updateOp('unsharp', { ...ops.unsharp, amount: v })}
-                min={0} max={5} step={0.1} />
-              <LabeledSlider label="Threshold" value={ops.unsharp.threshold}
-                onChange={v => updateOp('unsharp', { ...ops.unsharp, threshold: v })}
-                min={0} max={1} step={0.01} />
             </div>
           )}
         </OpSection>

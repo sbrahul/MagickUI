@@ -12,44 +12,29 @@ export function useLivePreview() {
   const livePreviewEnabled = useImageStore(s => s.livePreviewEnabled)
   const setLivePreview     = useImageStore(s => s.setLivePreview)
 
-  const timerRef  = useRef(null)
-  const abortRef  = useRef(null)
+  const timerRef = useRef(null)
 
   useEffect(() => {
     if (!originalFile || isProcessing || !livePreviewEnabled) {
       clearTimeout(timerRef.current)
-      abortRef.current?.abort()
       return
     }
 
     clearTimeout(timerRef.current)
 
     timerRef.current = setTimeout(async () => {
-      abortRef.current?.abort()
-      const ac = new AbortController()
-      abortRef.current = ac
-
       try {
-        const { blobUrl } = await processImage({
-          file: originalFile,
-          ops,
-          output,
-          signal: ac.signal,
-        })
+        const { blobUrl } = await processImage({ file: originalFile, ops, output })
         setLivePreview(blobUrl)
       } catch {
-        // Silently ignore aborts and errors — live preview is best-effort
+        // Silently ignore errors — live preview is best-effort
       }
     }, DEBOUNCE_MS)
 
     return () => clearTimeout(timerRef.current)
   }, [originalFile, ops, output, isProcessing, livePreviewEnabled]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Cancel in-flight request when the component unmounts
   useEffect(() => {
-    return () => {
-      clearTimeout(timerRef.current)
-      abortRef.current?.abort()
-    }
+    return () => clearTimeout(timerRef.current)
   }, [])
 }

@@ -2,22 +2,18 @@ import { useEffect, useState } from 'react'
 import { Toaster } from 'sonner'
 import { Sun, Moon } from 'lucide-react'
 import { useImageStore } from './store/imageStore.js'
-import { fetchCapabilities } from './api/client.js'
+import { getIM } from './lib/wasm.js'
 import { Sidebar } from './components/Sidebar.jsx'
 import { PreviewPanel } from './components/PreviewPanel.jsx'
-import { CommandBar } from './components/CommandBar.jsx'
 import { MobileSheet } from './components/MobileSheet.jsx'
 import { useLivePreview } from './hooks/useLivePreview.js'
 
 export default function App() {
-  const setCapabilities = useImageStore(s => s.setCapabilities)
   const [dark, setDark] = useState(true)
 
   useLivePreview()
 
-  useEffect(() => {
-    fetchCapabilities().then(setCapabilities)
-  }, [])
+  useEffect(() => { getIM() }, [])
 
   useEffect(() => {
     document.documentElement.classList.toggle('light', !dark)
@@ -52,7 +48,6 @@ export default function App() {
         </main>
       </div>
 
-      <CommandBar />
       <MobileSheet />
       <Toaster theme="dark" position="bottom-center" offset={56} />
     </div>

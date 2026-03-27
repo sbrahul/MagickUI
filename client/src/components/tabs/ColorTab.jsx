@@ -6,11 +6,9 @@ import { Switch }        from '../ui/switch.jsx'
 const COLORSPACES = ['sRGB', 'Gray', 'HSL', 'CMYK', 'Lab']
 
 const BINARY_OPS = [
-  { key: 'grayscale',   label: 'Grayscale'          },
-  { key: 'negate',      label: 'Negate (Invert)'    },
-  { key: 'normalize',   label: 'Normalize'           },
-  { key: 'equalize',    label: 'Equalize histogram'  },
-  { key: 'whiteBalance',label: 'White Balance'       },
+  { key: 'grayscale',   label: 'Grayscale'       },
+  { key: 'negate',      label: 'Negate (Invert)' },
+  { key: 'normalize',   label: 'Normalize'        },
 ]
 
 export function ColorTab() {
@@ -82,6 +80,21 @@ export function ColorTab() {
 
       <OpSection label="Adjustments">
         <div className="space-y-2">
+          <div className="flex gap-2 mb-1">
+            {[{ key: 'autoLevel', label: 'Auto Levels' }, { key: 'autoGamma', label: 'Auto Gamma' }].map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => updateOp(key, !ops[key])}
+                className={`flex-1 py-1 rounded text-[11px] font-medium border transition-colors ${
+                  ops[key]
+                    ? 'border-blue-500 bg-blue-600 text-white'
+                    : 'border-white/20 text-gray-400 hover:border-white/50 hover:text-white'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           {BINARY_OPS.map(({ key, label }) => (
             <div key={key} className="flex items-center justify-between">
               <span className="text-xs text-gray-400">{label}</span>

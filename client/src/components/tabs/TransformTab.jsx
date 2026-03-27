@@ -13,13 +13,25 @@ export function TransformTab() {
   const updateOp     = useImageStore(s => s.updateOp)
   const updateOutput = useImageStore(s => s.updateOutput)
   const output       = useImageStore(s => s.output)
-  const originalBlobUrl = useImageStore(s => s.originalBlobUrl)
-  const originalFile    = useImageStore(s => s.originalFile)
+  const originalBlobUrl    = useImageStore(s => s.originalBlobUrl)
+  const originalDimensions = useImageStore(s => s.originalDimensions)
 
   const [crop, setCrop] = useState({ unit: '%', x: 0, y: 0, width: 100, height: 100 })
   const imgRef   = useRef(null)
-  const aspectRef = useRef(null)
   const [lockAspect, setLockAspect] = useState(false)
+
+  // Original image aspect ratio (width ÷ height) — used to constrain resize inputs
+  const aspectRatio = originalDimensions
+    ? originalDimensions.width / originalDimensions.height
+    : null
+
+  function handleToggleMaintainAR(enabled) {
+    setLockAspect(enabled)
+    // Immediately snap height to the correct ratio when enabling
+    if (enabled && aspectRatio && ops.resize) {
+      updateOp('resize', { ...ops.resize, height: Math.round(ops.resize.width / aspectRatio) })
+    }
+  }
 
   function onCropComplete(c) {
     if (!imgRef.current || !c.width || !c.height) return
@@ -35,25 +47,17 @@ export function TransformTab() {
     })
   }
 
-  function loadAspect() {
-    if (aspectRef.current || !originalFile) return
-    const img = new Image()
-    const url = URL.createObjectURL(originalFile)
-    img.onload = () => { aspectRef.current = img.naturalWidth / img.naturalHeight; URL.revokeObjectURL(url) }
-    img.src = url
-  }
-
   function handleResizeWidth(w) {
     const r = ops.resize; if (!r) return
     const next = { ...r, width: w }
-    if (lockAspect && aspectRef.current) next.height = Math.round(w / aspectRef.current)
+    if (lockAspect && aspectRatio) next.height = Math.round(w / aspectRatio)
     updateOp('resize', next)
   }
 
   function handleResizeHeight(h) {
     const r = ops.resize; if (!r) return
     const next = { ...r, height: h }
-    if (lockAspect && aspectRef.current) next.width = Math.round(h * aspectRef.current)
+    if (lockAspect && aspectRatio) next.width = Math.round(h * aspectRatio)
     updateOp('resize', next)
   }
 
@@ -74,7 +78,11 @@ export function TransformTab() {
       <OpSection
         label="Resize"
         enabled={!!ops.resize}
-        onToggle={v => updateOp('resize', v ? { width: 800, height: 600, mode: 'fit' } : null)}
+        onToggle={v => updateOp('resize', v ? {
+          width:  originalDimensions?.width  ?? 800,
+          height: originalDimensions?.height ?? 600,
+          mode: 'fit',
+        } : null)}
       >
         {ops.resize && (
           <div className="space-y-2">
@@ -104,8 +112,8 @@ export function TransformTab() {
               )}
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-400">Lock aspect ratio</span>
-              <Switch checked={lockAspect} onCheckedChange={v => { setLockAspect(v); if (v) loadAspect() }} />
+              <span className="text-xs text-gray-400">Maintain aspect ratio</span>
+              <Switch checked={lockAspect} onCheckedChange={handleToggleMaintainAR} />
             </div>
           </div>
         )}

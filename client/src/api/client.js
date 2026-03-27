@@ -1,43 +1,47 @@
-/**
- * Sends the original file + current ops to /api/process.
- * Returns { blobUrl: string, meta: { format, sizeBytes } }
- * Throws { message, stderr } on error; throws DOMException name='AbortError' on cancel.
- */
-export async function processImage({ file, ops, output, signal }) {
-  // Strip keys that are null or false — they represent disabled ops and would
-  // trip server-side range validation (e.g. gamma: null → 0, out of [0.1,10]).
-  const activeOps = Object.fromEntries(
-    Object.entries(ops).filter(([, v]) => v !== null && v !== false)
-  )
+import { getIM }    from '../lib/wasm.js'
+import { buildOps, getMime } from '../lib/buildOps.js'
+import { MagickFormat } from '@imagemagick/magick-wasm'
 
-  const form = new FormData()
-  form.append('file', file)
-  form.append('ops', JSON.stringify(activeOps))
-  form.append('outputFormat',  output.format)
-  form.append('quality',       String(output.quality))
-  form.append('strip',         String(output.strip))
-  form.append('interlace',     String(output.interlace))
-  form.append('losslessWebp',  String(output.losslessWebp))
-
-  const res = await fetch('/api/process', { method: 'POST', body: form, signal })
-
-  if (!res.ok) {
-    let body = {}
-    try { body = await res.json() } catch {}
-    throw { message: body.message ?? `Server error ${res.status}`, stderr: body.stderr ?? '' }
-  }
-
-  const blob    = await res.blob()
-  const blobUrl = URL.createObjectURL(blob)
-  const meta    = {
-    format:    output.format,
-    sizeBytes: blob.size,
-  }
-  return { blobUrl, meta }
+const FORMAT_ENUM = {
+  jpeg: MagickFormat.Jpeg,
+  png:  MagickFormat.Png,
+  webp: MagickFormat.WebP,
+  avif: MagickFormat.Avif,
+  tiff: MagickFormat.Tiff,
+  gif:  MagickFormat.Gif,
 }
 
-export async function fetchCapabilities() {
-  const res = await fetch('/api/capabilities')
-  if (!res.ok) return { inputFormats: [], outputFormats: [] }
-  return res.json()
+export async function processImage({ file, ops, output }) {
+  const arrayBuffer = await file.arrayBuffer()
+  const bytes = new Uint8Array(arrayBuffer)
+  const IM = await getIM()
+
+  return new Promise((resolve, reject) => {
+    try {
+      IM.read(bytes, image => {
+        try {
+          buildOps(image, ops, output)
+          image.write(FORMAT_ENUM[output.format] ?? MagickFormat.Jpeg, data => {
+            const mime = getMime(output.format)
+            const blob = new Blob([data], { type: mime })
+            resolve({
+              blobUrl: URL.createObjectURL(blob),
+              meta: { format: output.format, sizeBytes: blob.size },
+            })
+          })
+        } catch (err) {
+          reject({ message: err?.message ?? String(err), stderr: '' })
+        }
+      })
+    } catch (err) {
+      reject({ message: err?.message ?? String(err), stderr: '' })
+    }
+  })
+}
+
+export function fetchCapabilities() {
+  return Promise.resolve({
+    inputFormats:  [],
+    outputFormats: ['jpeg', 'png', 'webp', 'avif', 'tiff', 'gif'],
+  })
 }

@@ -23,3 +23,6 @@ npm-debug.log*
 
 # Temp files
 /tmp/
+
+# Plan files (not committed)
+/.plan/
