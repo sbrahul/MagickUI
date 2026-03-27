@@ -11,6 +11,9 @@ services:
       PORT: "3000"
       NODE_ENV: production
       MAX_FILE_SIZE_MB: "${MAX_FILE_SIZE_MB:-50}"
+      # Maximum number of ImageMagick jobs that can run in parallel.
+      # Excess requests receive a 503. Tune to your CPU core count.
+      MAX_CONCURRENT_OPS: "${MAX_CONCURRENT_OPS:-4}"
       # Set to "true" when running behind a reverse proxy (nginx, Traefik, etc.).
       REVERSE_PROXY: "${REVERSE_PROXY:-false}"
       # Your site's public hostname. When set, CORS is restricted to https://{DOMAIN_NAME}.

@@ -115,5 +115,23 @@ if (process.env.NODE_ENV === 'production') {
 
 // ── Startup ─────────────────────────────────────────────────────────────────
 initCapabilities().then(() => {
-  app.listen(PORT, () => console.log(`Server listening on :${PORT}`))
+  const server = app.listen(PORT, () => console.log(`Server listening on :${PORT}`))
+
+  // Graceful shutdown: stop accepting new connections and wait for in-flight
+  // requests (including running magick processes) to complete before exit.
+  function shutdown() {
+    console.log('SIGTERM received — shutting down gracefully')
+    server.close(() => {
+      console.log('All connections closed')
+      process.exit(0)
+    })
+    // Hard kill after 30 s if requests are still running
+    setTimeout(() => {
+      console.error('Graceful shutdown timed out — forcing exit')
+      process.exit(1)
+    }, 30_000).unref()
+  }
+
+  process.on('SIGTERM', shutdown)
+  process.on('SIGINT',  shutdown)
 })

@@ -55,6 +55,14 @@ router.get('/capabilities', (_req, res) => {
   res.json(cachedCapabilities ?? { inputFormats: [], outputFormats: [] })
 })
 
+// ── Concurrency limiter ─────────────────────────────────────────────────────
+// Prevents server resource exhaustion when many clients submit jobs at once.
+// Excess requests receive a 503 so the client can retry rather than queuing
+// indefinitely and starving memory.
+
+const MAX_CONCURRENT = Number(process.env.MAX_CONCURRENT_OPS ?? 4)
+let activeOps = 0
+
 // ── MIME map ────────────────────────────────────────────────────────────────
 
 const MIME_FROM_FORMAT = {
@@ -69,6 +77,10 @@ const MIME_FROM_FORMAT = {
 // ── Process ─────────────────────────────────────────────────────────────────
 
 router.post('/process', async (req, res) => {
+  if (activeOps >= MAX_CONCURRENT) {
+    return res.status(503).json({ message: 'Server busy — too many concurrent operations, please retry' })
+  }
+  activeOps++
   const tmpDir = join('/tmp', randomUUID())
   try {
     // 1. Parse + validate
@@ -120,6 +132,7 @@ router.post('/process', async (req, res) => {
   } catch (e) {
     res.status(e.status ?? 500).json({ message: e.message, stderr: e.stderr ?? '' })
   } finally {
+    activeOps--
     rm(tmpDir, { recursive: true, force: true }).catch(() => {})
   }
 })
