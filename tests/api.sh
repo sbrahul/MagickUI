@@ -377,6 +377,60 @@ else
 fi
 rm -f "$fake"
 
+# ── Phase 3: Static / SPA / Headers ──────────────────────────────────────────
+echo ""
+echo "── Phase 3: Static / SPA / Headers ─────────────────────────────────────"
+
+# Security headers via helmet — verified on any response
+phdr=$(curl -sI "$BASE/api/capabilities")
+echo "$phdr" | grep -qi "x-content-type-options" \
+  && { green "Helmet: X-Content-Type-Options present"; PASS=$((PASS+1)); } \
+  || { red   "Helmet: X-Content-Type-Options missing"; FAIL=$((FAIL+1)); }
+
+echo "$phdr" | grep -qi "x-frame-options\|frame-ancestors" \
+  && { green "Helmet: frame protection header present"; PASS=$((PASS+1)); } \
+  || { red   "Helmet: frame protection header missing"; FAIL=$((FAIL+1)); }
+
+# /api/capabilities → Content-Type: application/json
+echo "$phdr" | grep -qi "content-type:.*application/json" \
+  && { green "GET /api/capabilities → Content-Type: application/json"; PASS=$((PASS+1)); } \
+  || { red   "GET /api/capabilities → Content-Type not application/json"; FAIL=$((FAIL+1)); }
+
+# SPA: root serves the built frontend (production mode)
+out=$(get /)
+check "GET / → 200" "200" "$out"
+grep -qi "<!doctype\|<html\|MagickStudio\|vite" "$out" \
+  && { green "GET / body is HTML/SPA"; PASS=$((PASS+1)); } \
+  || { red   "GET / body is not HTML/SPA"; FAIL=$((FAIL+1)); }
+
+# SPA fallback: unknown deep route returns index.html
+out=$(get /some/nonexistent/spa/route)
+check "SPA fallback → 200" "200" "$out"
+grep -qi "<!doctype\|<html" "$out" \
+  && { green "SPA fallback body is HTML"; PASS=$((PASS+1)); } \
+  || { red   "SPA fallback body is not HTML"; FAIL=$((FAIL+1)); }
+
+# POST /api/process sets X-Image-Format and Content-Type headers
+phdr=$(curl -s -D - -X POST "$BASE/api/process" \
+  -F "file=@$IMAGE"      \
+  -F 'ops={}'            \
+  -F 'outputFormat=jpeg' \
+  -o /dev/null)
+echo "$phdr" | grep -qi "x-image-format:" \
+  && { green "POST /api/process → X-Image-Format header present"; PASS=$((PASS+1)); } \
+  || { red   "POST /api/process → X-Image-Format header missing"; FAIL=$((FAIL+1)); }
+echo "$phdr" | grep -qi "content-type:.*image/jpeg" \
+  && { green "POST /api/process → Content-Type: image/jpeg"; PASS=$((PASS+1)); } \
+  || { red   "POST /api/process → Content-Type not image/jpeg"; FAIL=$((FAIL+1)); }
+
+# 413: file exceeding the default 50 MB upload limit
+big=$(mktemp /tmp/big_XXXXXX.jpg)
+printf '\xff\xd8\xff\xe0' > "$big"
+dd if=/dev/zero bs=1M count=51 >> "$big" 2>/dev/null
+out=$(post -F "file=@$big" -F 'ops={}' -F 'outputFormat=jpeg')
+check "Oversized file (51 MB) → 413" "413" "$out"
+rm -f "$big"
+
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo ""
 echo "════════════════════════════════════════════════════════"
@@ -384,49 +438,4 @@ echo "  Results: $PASS passed, $FAIL failed"
 echo "════════════════════════════════════════════════════════"
 echo ""
 [[ $FAIL -eq 0 ]]
-
-# ── helpers ──────────────────────────────────────────────────────────────────
-
-green() { printf '\033[32m✓ %s\033[0m\n' "$*"; }
-red()   { printf '\033[31m✗ %s\033[0m\n' "$*"; }
-
-check() {
-  local label="$1" expected_code="$2" out_file="$3"
-  local actual_code actual_type
-  actual_code=$(cat "${out_file}.code" 2>/dev/null)
-  actual_type=$(file -b "$out_file" 2>/dev/null)
-
-  if [[ "$actual_code" != "$expected_code" ]]; then
-    red "$label — expected HTTP $expected_code, got $actual_code"
-    [[ -f "$out_file" ]] && cat "$out_file"
-    FAIL=$((FAIL+1))
-    return 1
-  fi
-
-  # If a 4th arg is given, assert it appears in file type output
-  if [[ -n "$4" ]] && ! echo "$actual_type" | grep -qi "$4"; then
-    red "$label — expected file type '$4', got: $actual_type"
-    FAIL=$((FAIL+1))
-    return 1
-  fi
-
-  green "$label"
-  PASS=$((PASS+1))
-}
-
-post() {
-  local out="/tmp/test_api_$RANDOM"
-  local code
-  code=$(curl -s -X POST "$BASE/api/process" "$@" -o "$out" -w '%{http_code}')
-  echo "$code" > "${out}.code"
-  echo "$out"
-}
-
-get() {
-  local out="/tmp/test_api_$RANDOM"
-  local code
-  code=$(curl -s -X GET "$BASE$1" -o "$out" -w '%{http_code}')
-  echo "$code" > "${out}.code"
-  echo "$out"
-}
 
