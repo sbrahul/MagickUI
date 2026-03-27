@@ -399,7 +399,7 @@ echo "$phdr" | grep -qi "content-type:.*application/json" \
 # SPA: root serves the built frontend (production mode)
 out=$(get /)
 check "GET / → 200" "200" "$out"
-grep -qi "<!doctype\|<html\|MagickStudio\|vite" "$out" \
+grep -qi "<!doctype\|<html\|MagickUI\|vite" "$out" \
   && { green "GET / body is HTML/SPA"; PASS=$((PASS+1)); } \
   || { red   "GET / body is not HTML/SPA"; FAIL=$((FAIL+1)); }
 

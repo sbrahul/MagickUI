@@ -1,4 +1,4 @@
-# MagickStudio
+# MagickUI
 
 A browser-based image processing tool powered by [ImageMagick](https://imagemagick.org). Upload an image, apply transforms, color corrections, effects, and annotations, then download the result — all without leaving the browser.
 

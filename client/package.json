@@ -1,5 +1,5 @@
 {
-  "name": "magickstudio-client",
+  "name": "magickui-client",
   "type": "module",
   "scripts": {
     "dev": "vite",

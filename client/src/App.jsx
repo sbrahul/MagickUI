@@ -33,7 +33,7 @@ export default function App() {
     <div className="h-svh flex flex-col bg-gray-950 text-white overflow-hidden">
       {/* Header */}
       <header className="flex items-center px-4 h-12 border-b border-white/10 flex-shrink-0">
-        <span className="font-bold tracking-tight text-sm">MagickStudio</span>
+        <span className="font-bold tracking-tight text-sm">MagickUI</span>
         <button
           onClick={() => setDark(d => !d)}
           className="ml-auto p-2 rounded hover:bg-white/10 text-gray-400"

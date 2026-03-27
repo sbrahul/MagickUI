@@ -1,5 +1,5 @@
 {
-  "name": "magickstudio-server",
+  "name": "magickui-server",
   "type": "module",
   "scripts": {
     "start": "node index.js",
