@@ -1,18 +1,25 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
-import { ZoomIn, ZoomOut } from 'lucide-react'
+import { ZoomIn, ZoomOut, Zap } from 'lucide-react'
 import { useImageStore } from '../store/imageStore.js'
 
 export function PreviewPanel() {
-  const originalBlobUrl  = useImageStore(s => s.originalBlobUrl)
-  const processedBlobUrl = useImageStore(s => s.processedBlobUrl)
-  const processedMeta    = useImageStore(s => s.processedMeta)
-  const showOriginal     = useImageStore(s => s.showOriginal)
-  const isProcessing     = useImageStore(s => s.isProcessing)
-  const togglePreview    = useImageStore(s => s.togglePreview)
-  const [zoom, setZoom]  = useState(1)
+  const originalBlobUrl    = useImageStore(s => s.originalBlobUrl)
+  const processedBlobUrl   = useImageStore(s => s.processedBlobUrl)
+  const processedMeta      = useImageStore(s => s.processedMeta)
+  const livePreviewUrl     = useImageStore(s => s.livePreviewUrl)
+  const isLivePreviewing   = useImageStore(s => s.isLivePreviewing)
+  const livePreviewEnabled = useImageStore(s => s.livePreviewEnabled)
+  const toggleLivePreview  = useImageStore(s => s.toggleLivePreview)
+  const showOriginal       = useImageStore(s => s.showOriginal)
+  const isProcessing       = useImageStore(s => s.isProcessing)
+  const togglePreview      = useImageStore(s => s.togglePreview)
+  const [zoom, setZoom]    = useState(1)
 
-  const src = showOriginal ? originalBlobUrl : processedBlobUrl
+  // Priority: live preview > applied result > original
+  const src = livePreviewUrl ?? (showOriginal ? originalBlobUrl : processedBlobUrl)
+  // Toggling before/after only makes sense when there's an applied result and no live preview
+  const canToggle = !!processedBlobUrl && !isLivePreviewing
 
   if (!originalBlobUrl) {
     return (
@@ -24,8 +31,20 @@ export function PreviewPanel() {
 
   return (
     <div className="relative flex-1 flex flex-col overflow-hidden bg-[#111] rounded-xl">
-      {/* Zoom controls */}
+      {/* Zoom controls + live preview toggle */}
       <div className="absolute top-3 right-3 z-10 flex gap-1">
+        <button
+          onClick={toggleLivePreview}
+          title={livePreviewEnabled ? 'Disable live preview' : 'Enable live preview'}
+          className={`flex items-center gap-1 px-2 py-1.5 rounded text-xs ${
+            livePreviewEnabled
+              ? 'bg-blue-600 text-white'
+              : 'bg-black/50 text-gray-400 hover:bg-black/80 hover:text-white'
+          }`}
+        >
+          <Zap size={13} />
+          <span className="hidden sm:inline">Live</span>
+        </button>
         <button
           onClick={() => setZoom(z => Math.min(z + 0.25, 4))}
           className="p-1.5 rounded bg-black/50 hover:bg-black/80 text-white"
@@ -46,8 +65,16 @@ export function PreviewPanel() {
         </button>
       </div>
 
-      {/* Before/After toggle badge */}
-      {processedBlobUrl && (
+      {/* Live preview badge */}
+      {isLivePreviewing && (
+        <div className="absolute top-3 left-3 z-10 px-2 py-1 rounded bg-blue-600/80 text-xs text-white flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+          Live preview
+        </div>
+      )}
+
+      {/* Before/After toggle badge — only when live preview is off */}
+      {canToggle && (
         <button
           onClick={togglePreview}
           className="absolute top-3 left-3 z-10 px-2 py-1 rounded bg-black/60 text-xs text-white hover:bg-black/80"
@@ -62,16 +89,16 @@ export function PreviewPanel() {
           <motion.img
             key={src}
             src={src}
-            alt={showOriginal ? 'original' : 'processed'}
-            onClick={processedBlobUrl ? togglePreview : undefined}
+            alt={isLivePreviewing ? 'live preview' : showOriginal ? 'original' : 'processed'}
+            onClick={canToggle ? togglePreview : undefined}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.15 }}
             style={{
               transform: `scale(${zoom})`,
               transformOrigin: 'center',
-              cursor: processedBlobUrl ? 'pointer' : 'default',
+              cursor: canToggle ? 'pointer' : 'default',
             }}
             className="max-w-full max-h-full object-contain rounded"
           />
@@ -79,7 +106,7 @@ export function PreviewPanel() {
       </div>
 
       {/* Meta bar */}
-      {!showOriginal && processedMeta && (
+      {!showOriginal && !isLivePreviewing && processedMeta && (
         <div className="px-4 py-2 bg-black/40 text-xs text-gray-400 flex gap-4">
           <span>{processedMeta.format?.toUpperCase()}</span>
           <span>{(processedMeta.sizeBytes / 1024).toFixed(1)} KB</span>

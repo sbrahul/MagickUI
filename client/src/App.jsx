@@ -7,10 +7,13 @@ import { Sidebar } from './components/Sidebar.jsx'
 import { PreviewPanel } from './components/PreviewPanel.jsx'
 import { CommandBar } from './components/CommandBar.jsx'
 import { MobileSheet } from './components/MobileSheet.jsx'
+import { useLivePreview } from './hooks/useLivePreview.js'
 
 export default function App() {
   const setCapabilities = useImageStore(s => s.setCapabilities)
   const [dark, setDark] = useState(true)
+
+  useLivePreview()
 
   useEffect(() => {
     fetchCapabilities().then(setCapabilities)

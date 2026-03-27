@@ -61,6 +61,11 @@ export const useImageStore = create((set, get) => ({
   abortController: null,
   errorDetail: null,
 
+  // Live preview (temporary, cleared when Apply is pressed)
+  livePreviewUrl: null,
+  isLivePreviewing: false,
+  livePreviewEnabled: false,
+
   // App state
   capabilities: null,
   showOriginal: true,
@@ -77,12 +82,16 @@ export const useImageStore = create((set, get) => ({
     const prevP = get().processedBlobUrl
     if (prevP) URL.revokeObjectURL(prevP)
     const blobUrl = file ? URL.createObjectURL(file) : null
+    const prevLive = get().livePreviewUrl
+    if (prevLive) URL.revokeObjectURL(prevLive)
     set({
       originalFile: file,
       originalBlobUrl: blobUrl,
       originalDimensions: null,
       processedBlobUrl: null,
       processedMeta: null,
+      livePreviewUrl: null,
+      isLivePreviewing: false,
       showOriginal: true,
       errorDetail: null,
       ops: { ...DEFAULT_OPS },
@@ -107,10 +116,32 @@ export const useImageStore = create((set, get) => ({
   },
 
   resetOps() {
+    const prevLive = get().livePreviewUrl
+    if (prevLive) URL.revokeObjectURL(prevLive)
     set({
       ops: { ...DEFAULT_OPS },
+      livePreviewUrl: null,
+      isLivePreviewing: false,
       showOriginal: true,
     })
+  },
+
+  setLivePreview(blobUrl) {
+    const prev = get().livePreviewUrl
+    if (prev) URL.revokeObjectURL(prev)
+    set({ livePreviewUrl: blobUrl, isLivePreviewing: blobUrl !== null })
+  },
+
+  toggleLivePreview() {
+    const next = !get().livePreviewEnabled
+    // When disabling, clear any existing live preview
+    if (!next) {
+      const prev = get().livePreviewUrl
+      if (prev) URL.revokeObjectURL(prev)
+      set({ livePreviewEnabled: false, livePreviewUrl: null, isLivePreviewing: false })
+    } else {
+      set({ livePreviewEnabled: true })
+    }
   },
 
   setProcessing(isProcessing, abortController = null) {
@@ -120,7 +151,10 @@ export const useImageStore = create((set, get) => ({
   setProcessed(blobUrl, meta) {
     const prev = get().processedBlobUrl
     if (prev) URL.revokeObjectURL(prev)
-    set({ processedBlobUrl: blobUrl, processedMeta: meta, showOriginal: false, errorDetail: null })
+    // Clear the live preview — the applied result takes over
+    const prevLive = get().livePreviewUrl
+    if (prevLive) URL.revokeObjectURL(prevLive)
+    set({ processedBlobUrl: blobUrl, processedMeta: meta, livePreviewUrl: null, isLivePreviewing: false, showOriginal: false, errorDetail: null })
   },
 
   setError(errorDetail) {
@@ -134,9 +168,10 @@ export const useImageStore = create((set, get) => ({
   },
 
   cleanup() {
-    const { originalBlobUrl, processedBlobUrl } = get()
+    const { originalBlobUrl, processedBlobUrl, livePreviewUrl } = get()
     if (originalBlobUrl) URL.revokeObjectURL(originalBlobUrl)
     if (processedBlobUrl) URL.revokeObjectURL(processedBlobUrl)
-    set({ originalBlobUrl: null, processedBlobUrl: null })
+    if (livePreviewUrl) URL.revokeObjectURL(livePreviewUrl)
+    set({ originalBlobUrl: null, processedBlobUrl: null, livePreviewUrl: null })
   },
 }))
