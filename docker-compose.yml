@@ -12,7 +12,7 @@ services:
     cap_drop:
       - ALL
     ulimits:
-      nproc: 64
+      nproc: 256
       nofile:
-        soft: 1024
-        hard: 1024
+        soft: 4096
+        hard: 4096

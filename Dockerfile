@@ -9,9 +9,18 @@ RUN npm run build
 # ── Stage 2: production server ─────────────────────────────────────
 FROM node:25-alpine AS production
 
-# imagemagick-heic includes libheif for HEIF/HEIC support.
-# Falls back gracefully if unavailable — /api/capabilities reports it.
-RUN apk add --no-cache imagemagick imagemagick-heic 2>/dev/null || apk add --no-cache imagemagick
+# imagemagick-heic: HEIF/HEIC/AVIF via libheif
+# imagemagick-jpeg: JPEG delegate
+# imagemagick-webp: WebP delegate
+# imagemagick-tiff: TIFF delegate
+RUN apk add --no-cache \
+      imagemagick \
+      imagemagick-jpeg \
+      imagemagick-webp \
+      imagemagick-tiff \
+      imagemagick-heic \
+      ttf-dejavu 2>/dev/null || \
+    apk add --no-cache imagemagick imagemagick-jpeg imagemagick-webp imagemagick-tiff ttf-dejavu
 
 WORKDIR /app/server
 COPY server/package*.json ./
