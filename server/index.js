@@ -10,9 +10,23 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const app  = express()
 const PORT = process.env.PORT ?? 3001
 
+// ── Reverse-proxy support ────────────────────────────────────────────────────
+// REVERSE_PROXY: set to "true" when this container sits behind a reverse proxy
+// (nginx, Traefik, Caddy, etc.). Enables trust of X-Forwarded-* headers so
+// req.ip and req.protocol reflect the real client values.
+const behindProxy = process.env.REVERSE_PROXY === 'true'
+app.set('trust proxy', behindProxy ? 1 : false)
+
 // ── Security headers ────────────────────────────────────────────────────────
 app.use(helmet())
-app.use(cors())
+
+// DOMAIN_NAME: your site's hostname (e.g. images.example.com).
+// When set, only requests from https://{DOMAIN_NAME} are allowed by CORS.
+// Leave unset (default) to allow any origin — fine for local / direct access.
+const domainName = process.env.DOMAIN_NAME
+const corsOrigin = domainName ? `https://${domainName}` : '*'
+app.use(cors({ origin: corsOrigin }))
+
 app.use(express.json({ limit: '1mb' }))
 
 // ── Magic-byte validation ────────────────────────────────────────────────────
