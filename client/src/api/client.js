@@ -4,9 +4,15 @@
  * Throws { message, stderr } on error; throws DOMException name='AbortError' on cancel.
  */
 export async function processImage({ file, ops, output, signal }) {
+  // Strip keys that are null or false — they represent disabled ops and would
+  // trip server-side range validation (e.g. gamma: null → 0, out of [0.1,10]).
+  const activeOps = Object.fromEntries(
+    Object.entries(ops).filter(([, v]) => v !== null && v !== false)
+  )
+
   const form = new FormData()
   form.append('file', file)
-  form.append('ops', JSON.stringify(ops))
+  form.append('ops', JSON.stringify(activeOps))
   form.append('outputFormat',  output.format)
   form.append('quality',       String(output.quality))
   form.append('strip',         String(output.strip))
