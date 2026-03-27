@@ -18,7 +18,15 @@ const behindProxy = process.env.REVERSE_PROXY === 'true'
 app.set('trust proxy', behindProxy ? 1 : false)
 
 // ── Security headers ────────────────────────────────────────────────────────
-app.use(helmet())
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      // blob: is required for uploaded image previews and processed results
+      'img-src': ["'self'", 'data:', 'blob:'],
+    },
+  },
+}))
 
 // DOMAIN_NAME: your site's hostname (e.g. images.example.com).
 // When set, only requests from https://{DOMAIN_NAME} are allowed by CORS.
