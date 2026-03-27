@@ -1,5 +1,5 @@
 # ── Stage 1: build client ──────────────────────────────────────────
-FROM node:22-alpine3.20 AS client-builder
+FROM node:25-alpine AS client-builder
 WORKDIR /app/client
 COPY client/package*.json ./
 RUN npm ci
@@ -7,7 +7,7 @@ COPY client/ ./
 RUN npm run build
 
 # ── Stage 2: production server ─────────────────────────────────────
-FROM node:22-alpine3.20 AS production
+FROM node:25-alpine AS production
 
 # imagemagick-heic includes libheif for HEIF/HEIC support.
 # Falls back gracefully if unavailable — /api/capabilities reports it.

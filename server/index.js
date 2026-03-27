@@ -20,7 +20,7 @@ app.post('/api/process',     (_req, res) => res.status(501).json({ error: 'Not i
 if (process.env.NODE_ENV === 'production') {
   const pub = join(__dirname, 'public')
   app.use(express.static(pub))
-  app.get('*', (_req, res) => res.sendFile(join(pub, 'index.html')))
+  app.get('/{*path}', (_req, res) => res.sendFile(join(pub, 'index.html')))
 }
 
 app.listen(PORT, () => console.log(`Server listening on :${PORT}`))
