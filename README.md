@@ -18,6 +18,9 @@ All image processing runs locally in your browser via WebAssembly. **No image da
 - **Mobile-first** — responsive layout with a slide-up bottom sheet on small screens
 - **Dark / light theme** toggle
 
+## Screenshot
+<img src="docs/screenshot.png" alt="MagickUI screenshot" width="1024" />
+
 ## Stack
 
 | Layer | Technology |
