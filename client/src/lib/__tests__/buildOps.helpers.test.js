@@ -2,11 +2,11 @@ import { describe, it, expect, vi } from 'vitest'
 import { getMime, hexToMagickColor, gravityEnum, colorspaceEnum } from '../buildOps.js'
 
 vi.mock('@imagemagick/magick-wasm', () => {
-  const MagickColor = vi.fn((r, g, b, a) => ({ r, g, b, a }))
+  const MagickColor = vi.fn(function(r, g, b, a) { this.r = r; this.g = g; this.b = b; this.a = a })
   const ColorSpace  = { sRGB: 'sRGB', Gray: 'Gray', HSL: 'HSL', CMYK: 'CMYK', Lab: 'Lab', Undefined: 'Undefined' }
   const Gravity     = { NorthWest: 'NW', North: 'N', NorthEast: 'NE', West: 'W', Center: 'C', East: 'E', SouthWest: 'SW', South: 'S', SouthEast: 'SE', Undefined: 'Undef' }
-  const MagickGeometry     = vi.fn()
-  const Percentage         = vi.fn()
+  const MagickGeometry     = vi.fn(function() {})
+  const Percentage         = vi.fn(function() {})
   const Interlace          = { Jpeg: 'Jpeg' }
   const PixelInterpolateMethod = { Undefined: 'Undefined' }
   return { MagickColor, MagickGeometry, Percentage, ColorSpace, Gravity, Interlace, PixelInterpolateMethod }

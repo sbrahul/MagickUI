@@ -3,9 +3,9 @@ import { buildOps } from '../buildOps.js'
 import { makeMockImage } from './setup.js'
 
 vi.mock('@imagemagick/magick-wasm', () => {
-  const MagickColor    = vi.fn((...a) => ({ _type: 'MagickColor', args: a }))
-  const MagickGeometry = vi.fn((...a) => ({ _type: 'MagickGeometry', args: a }))
-  const Percentage     = vi.fn(v => ({ _type: 'Percentage', value: v }))
+  const MagickColor    = vi.fn(function(...a) { this._type='MagickColor'; this.args=a })
+  const MagickGeometry = vi.fn(function(...a) { this._type='MagickGeometry'; this.args=a })
+  const Percentage     = vi.fn(function(v) { this._type='Percentage'; this.value=v })
   const ColorSpace     = { sRGB: 'sRGB', Gray: 'Gray', HSL: 'HSL', CMYK: 'CMYK', Lab: 'Lab', Undefined: 'Undefined' }
   const Gravity        = { Center: 'C', NorthWest: 'NW', Undefined: 'Undef' }
   const Interlace      = { Jpeg: 'Jpeg' }
