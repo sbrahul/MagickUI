@@ -1,5 +1,6 @@
 import { useDropzone } from 'react-dropzone'
 import { useImageStore } from '../store/imageStore.js'
+import { processImage } from '../api/client.js'
 import { Upload } from 'lucide-react'
 import { cn } from '../lib/utils.js'
 
@@ -17,14 +18,33 @@ const ACCEPTED = {
 
 export function UploadZone() {
   const setFile         = useImageStore(s => s.setFile)
+  const setDisplayUrl   = useImageStore(s => s.setDisplayUrl)
   const originalFile    = useImageStore(s => s.originalFile)
   const originalBlobUrl = useImageStore(s => s.originalBlobUrl)
+
+  async function handleDrop([file]) {
+    setFile(file)
+    if (file.type === 'image/heic' || file.type === 'image/heif' || /\.heic$/i.test(file.name) || /\.heif$/i.test(file.name)) {
+      try {
+        // Browser cannot render HEIC natively; convert to JPEG via WASM for display only.
+        // originalFile is kept as-is so processing still operates on the original.
+        const { blobUrl } = await processImage({
+          file,
+          ops: {},
+          output: { format: 'jpeg', quality: 85, strip: false, interlace: false, losslessWebp: false },
+        })
+        setDisplayUrl(blobUrl)
+      } catch {
+        // Leave the broken img — better than crashing
+      }
+    }
+  }
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: ACCEPTED,
     maxSize: 50 * 1024 * 1024,
     multiple: false,
-    onDropAccepted: ([file]) => setFile(file),
+    onDropAccepted: handleDrop,
   })
 
   if (originalFile) {

@@ -141,6 +141,12 @@ export const useImageStore = create((set, get) => ({
     set({ processedBlobUrl: blobUrl, processedMeta: meta, livePreviewUrl: null, isLivePreviewing: false, showOriginal: false, errorDetail: null })
   },
 
+  setDisplayUrl(blobUrl) {
+    const prev = get().originalBlobUrl
+    if (prev) URL.revokeObjectURL(prev)
+    set({ originalBlobUrl: blobUrl })
+  },
+
   setError(errorDetail) {
     set({ errorDetail, isProcessing: false, abortController: null })
   },
