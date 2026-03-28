@@ -28,7 +28,7 @@ export function FormatPicker() {
               'py-1 rounded text-[11px] font-medium border transition-colors',
               output.format === f.value
                 ? 'border-blue-500 bg-blue-600 text-white'
-                : 'border-white/20 text-gray-400 hover:border-white/50 hover:text-white',
+                : 'border-white/20 text-gray-400 dark:hover:text-white hover:text-gray-900 hover:border-gray-400',
             )}
           >
             {f.label}

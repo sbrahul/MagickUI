@@ -37,7 +37,7 @@ export function Sidebar() {
             <TabsTrigger
               key={t.id}
               value={t.id}
-              className="text-xs px-2 py-1 rounded data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-400 hover:text-white"
+              className="text-xs px-2 py-1 rounded data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-400 dark:hover:text-white hover:text-gray-900 hover:bg-black/10"
             >
               {t.label}
             </TabsTrigger>

@@ -29,12 +29,12 @@ export function PreviewPanel() {
   }
 
   return (
-    <div className="relative flex-1 flex flex-col overflow-hidden bg-[#111] rounded-xl">
+    <div className="preview-panel relative flex-1 flex flex-col overflow-hidden bg-[#111] rounded-xl">
       <div className="absolute top-3 right-3 z-10 flex gap-1">
         <button
           onClick={toggleLivePreview}
           title={livePreviewEnabled ? 'Disable live preview' : 'Enable live preview'}
-          className={`flex items-center gap-1 px-2 py-1.5 rounded text-xs ${
+          className={`flex items-center gap-1 px-2 py-1.5 rounded text-xs preview-btn ${
             livePreviewEnabled
               ? 'bg-blue-600 text-white'
               : 'bg-black/50 text-gray-400 hover:bg-black/80 hover:text-white'
@@ -45,19 +45,19 @@ export function PreviewPanel() {
         </button>
         <button
           onClick={() => setZoom(z => Math.min(z + 0.25, 4))}
-          className="p-1.5 rounded bg-black/50 hover:bg-black/80 text-white"
+          className="preview-btn p-1.5 rounded bg-black/50 hover:bg-black/80 text-white"
         >
           <ZoomIn size={16} />
         </button>
         <button
           onClick={() => setZoom(1)}
-          className="px-2 py-1 rounded bg-black/50 hover:bg-black/80 text-white text-xs min-w-[3rem] text-center"
+          className="preview-btn px-2 py-1 rounded bg-black/50 hover:bg-black/80 text-white text-xs min-w-[3rem] text-center"
         >
           {Math.round(zoom * 100)}%
         </button>
         <button
           onClick={() => setZoom(z => Math.max(z - 0.25, 0.25))}
-          className="p-1.5 rounded bg-black/50 hover:bg-black/80 text-white"
+          className="preview-btn p-1.5 rounded bg-black/50 hover:bg-black/80 text-white"
         >
           <ZoomOut size={16} />
         </button>

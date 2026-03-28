@@ -16,6 +16,25 @@
 .light .bg-gray-950 { background-color: #e2e8f0 !important; }
 .light .bg-gray-900 { background-color: #f8fafc !important; }
 .light .text-white  { color: #0f172a !important; }
-.light .text-gray-300, .light .text-gray-400 { color: #475569 !important; }
+
+/* Active blue buttons must keep white text even in light mode.
+   Use highest specificity + !important to beat the text-gray-400 and text-white overrides above. */
+.light [data-state="active"] { color: #ffffff !important; }
+.light .bg-blue-600 { color: #ffffff !important; }
+.light .bg-blue-600 * { color: #ffffff !important; }
+
+.light .text-gray-300:not([data-state="active"]),
+.light .text-gray-400:not([data-state="active"]) { color: #475569 !important; }
 .light .border-white\/10 { border-color: #cbd5e1 !important; }
 .light .bg-white\/10 { background-color: #0f172a14 !important; }
+
+/* Preview panel: light background and visible overlay buttons */
+.light .preview-panel { background-color: #cbd5e1 !important; }
+.light .preview-btn {
+  background-color: rgba(255, 255, 255, 0.75) !important;
+  color: #1e293b !important;
+}
+.light .preview-btn:hover {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  color: #0f172a !important;
+}
