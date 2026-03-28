@@ -1,5 +1,6 @@
-import { X } from 'lucide-react'
+import { X, Download } from 'lucide-react'
 import { useImageStore } from '../store/imageStore.js'
+import { processImage } from '../api/client.js'
 import { UploadZone }    from './UploadZone.jsx'
 import { FormatPicker }  from './FormatPicker.jsx'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs.jsx'
@@ -20,8 +21,30 @@ const TABS = [
 ]
 
 export function Sidebar() {
-  const errorDetail = useImageStore(s => s.errorDetail)
-  const resetOps    = useImageStore(s => s.resetOps)
+  const originalFile  = useImageStore(s => s.originalFile)
+  const ops           = useImageStore(s => s.ops)
+  const processedBlobUrl = useImageStore(s => s.processedBlobUrl)
+  const processedMeta    = useImageStore(s => s.processedMeta)
+  const output           = useImageStore(s => s.output)
+  const isProcessing  = useImageStore(s => s.isProcessing)
+  const setProcessing = useImageStore(s => s.setProcessing)
+  const setProcessed  = useImageStore(s => s.setProcessed)
+  const setError      = useImageStore(s => s.setError)
+  const errorDetail   = useImageStore(s => s.errorDetail)
+  const resetOps      = useImageStore(s => s.resetOps)
+
+  async function applyChanges() {
+    if (!originalFile || isProcessing) return
+    setProcessing(true)
+    try {
+      const { blobUrl, meta } = await processImage({ file: originalFile, ops, output })
+      setProcessed(blobUrl, meta)
+    } catch (err) {
+      setError(err)
+    } finally {
+      setProcessing(false)
+    }
+  }
 
   return (
     <aside className="w-80 flex-shrink-0 flex flex-col bg-gray-900 border-r border-white/10 overflow-hidden">
@@ -53,10 +76,29 @@ export function Sidebar() {
         </div>
       </Tabs>
 
-      <div className="p-3 border-t border-white/10">
+      <div className="p-3 border-t border-white/10 flex flex-col gap-2">
+        <div className="flex gap-2">
+          <button
+            onClick={applyChanges}
+            disabled={!originalFile || isProcessing}
+            className="flex-1 py-2 rounded text-sm font-medium bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-colors"
+          >
+            {isProcessing ? 'Processing…' : 'Apply'}
+          </button>
+          {processedBlobUrl && (
+            <a
+              href={processedBlobUrl}
+              download={`output.${output.format}`}
+              title={processedMeta ? `${(processedMeta.sizeBytes / 1024).toFixed(1)} KB` : undefined}
+              className="flex items-center justify-center gap-1.5 px-3 py-2 rounded text-sm font-medium bg-green-700 hover:bg-green-600 text-white transition-colors"
+            >
+              <Download size={14} />
+            </a>
+          )}
+        </div>
         <button
           onClick={resetOps}
-          className="w-full py-1.5 rounded text-sm text-gray-400 hover:text-white hover:bg-white/10"
+          className="w-full py-1.5 rounded text-sm text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
         >
           Reset all settings
         </button>

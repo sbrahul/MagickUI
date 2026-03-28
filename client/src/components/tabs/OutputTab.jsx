@@ -1,4 +1,3 @@
-import { Download } from 'lucide-react'
 import { useImageStore } from '../../store/imageStore.js'
 import { LabeledSlider } from '../ui/labeled-slider.jsx'
 import { Switch }        from '../ui/switch.jsx'
@@ -6,8 +5,6 @@ import { Switch }        from '../ui/switch.jsx'
 export function OutputTab() {
   const output           = useImageStore(s => s.output)
   const updateOutput     = useImageStore(s => s.updateOutput)
-  const processedBlobUrl = useImageStore(s => s.processedBlobUrl)
-  const processedMeta    = useImageStore(s => s.processedMeta)
 
   return (
     <div className="space-y-3">
@@ -39,18 +36,6 @@ export function OutputTab() {
         <span className="text-xs text-gray-300">Strip metadata (EXIF, ICC)</span>
         <Switch checked={output.strip} onCheckedChange={v => updateOutput('strip', v)} />
       </div>
-
-      {/* Download */}
-      {processedBlobUrl && (
-        <a href={processedBlobUrl} download={`output.${output.format}`}
-          className="flex items-center justify-center gap-2 w-full py-2 rounded bg-green-700 hover:bg-green-600 text-white text-sm font-medium">
-          <Download size={15} />
-          Download output.{output.format}
-          {processedMeta && (
-            <span className="text-green-300 text-xs">({(processedMeta.sizeBytes / 1024).toFixed(1)} KB)</span>
-          )}
-        </a>
-      )}
 
     </div>
   )
