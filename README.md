@@ -1,6 +1,10 @@
 # MagickUI
 
-A browser-based image processing tool powered by [@imagemagick/magick-wasm](https://github.com/dlemstra/magick-wasm). Upload an image, apply transforms, color corrections, effects, and annotations, then download the result — entirely in the browser. Images never leave your device.
+A browser-based image processing tool powered by [@imagemagick/magick-wasm](https://www.npmjs.com/package/@imagemagick/magick-wasm). Upload an image, apply transforms, color corrections, effects, and annotations, then download the result — entirely in the browser. Images never leave your device.
+
+## Privacy
+
+All image processing runs locally in your browser via WebAssembly. **No image data is ever uploaded or sent to any server.** The app is served as a static site (HTML + JS + wasm); once loaded, it works entirely offline.
 
 ## Features
 
@@ -37,6 +41,39 @@ docker compose up --build
 
 Open [http://localhost:8080](http://localhost:8080).
 
+## Configuration
+
+The container is a plain nginx static server with a single environment variable:
+
+| Variable | Default | Description |
+|---|---|---|
+| `BIND_PORT` | `8080` | Host port the container binds to |
+
+Set it inline or in a `.env` file:
+
+```bash
+BIND_PORT=9000 podman compose up --build
+```
+
+### Running behind a reverse proxy
+
+If you want to put MagickUI behind nginx, Traefik, Caddy, etc., use `expose` instead of `ports` so the container isn't bound to the host network directly. Example `compose.override.yml`:
+
+```yaml
+services:
+  web:
+    expose:
+      - "80"
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true
+```
+
+Then point your proxy at `http://web:80`.
+
 ## Development
 
 ### Prerequisites
@@ -57,6 +94,10 @@ npm run dev   # Vite dev server on :5173
 cd client
 npm test
 ```
+
+## Acknowledgements
+
+Image processing is powered by [@imagemagick/magick-wasm](https://www.npmjs.com/package/@imagemagick/magick-wasm), a WebAssembly port of [ImageMagick](https://imagemagick.org) maintained by [Dirk Lemstra](https://github.com/dlemstra).
 
 ## License
 
