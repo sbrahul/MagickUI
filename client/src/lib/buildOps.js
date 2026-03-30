@@ -195,7 +195,7 @@ export function buildOps(image, ops, output) {
   image.quality = output.quality ?? 85
   if (output.strip) image.strip()
   if (output.interlace && output.format === 'jpeg') {
-    image.interlace = Interlace.Jpeg
+    image.settings.interlace = Interlace.Jpeg
   }
   if (output.losslessWebp && output.format === 'webp') {
     image.setArtifact('webp:lossless', 'true')
