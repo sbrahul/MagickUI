@@ -100,12 +100,16 @@ export function PreviewPanel() {
         </AnimatePresence>
       </div>
 
-      {!showOriginal && !isLivePreviewing && processedMeta && (
-        <div className="px-4 py-2 bg-black/40 text-xs text-gray-400 flex gap-4">
-          <span>{processedMeta.format?.toUpperCase()}</span>
-          <span>{(processedMeta.sizeBytes / 1024).toFixed(1)} KB</span>
-        </div>
-      )}
+      <div className="px-4 py-2 bg-black/40 text-xs text-gray-400 flex gap-4">
+        {!showOriginal && !isLivePreviewing && processedMeta ? (
+          <>
+            <span>{processedMeta.format?.toUpperCase()}</span>
+            <span>{(processedMeta.sizeBytes / 1024).toFixed(1)} KB</span>
+          </>
+        ) : (
+          <span className="invisible">placeholder</span>
+        )}
+      </div>
 
       <AnimatePresence>
         {isProcessing && (
