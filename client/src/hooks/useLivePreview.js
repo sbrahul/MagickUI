@@ -4,10 +4,14 @@ import { processImage } from '../api/client.js'
 
 const DEBOUNCE_MS = 600
 
+// Fixed output settings for live preview: always JPEG, lower quality.
+// Format conversion is meaningless at preview resolution and adds latency.
+const PREVIEW_OUTPUT = { format: 'jpeg', quality: 70, strip: false, interlace: false, losslessWebp: false }
+
 export function useLivePreview() {
   const originalFile       = useImageStore(s => s.originalFile)
+  const previewFile        = useImageStore(s => s.previewFile)
   const ops                = useImageStore(s => s.ops)
-  const output             = useImageStore(s => s.output)
   const isProcessing       = useImageStore(s => s.isProcessing)
   const livePreviewEnabled = useImageStore(s => s.livePreviewEnabled)
   const setLivePreview     = useImageStore(s => s.setLivePreview)
@@ -24,7 +28,8 @@ export function useLivePreview() {
 
     timerRef.current = setTimeout(async () => {
       try {
-        const { blobUrl } = await processImage({ file: originalFile, ops, output })
+        const file = previewFile ?? originalFile
+        const { blobUrl } = await processImage({ file, ops, output: PREVIEW_OUTPUT })
         setLivePreview(blobUrl)
       } catch {
         // Silently ignore errors — live preview is best-effort
@@ -32,7 +37,7 @@ export function useLivePreview() {
     }, DEBOUNCE_MS)
 
     return () => clearTimeout(timerRef.current)
-  }, [originalFile, ops, output, isProcessing, livePreviewEnabled]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [originalFile, previewFile, ops, isProcessing, livePreviewEnabled]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     return () => clearTimeout(timerRef.current)

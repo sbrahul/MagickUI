@@ -47,6 +47,7 @@ export const useImageStore = create((set, get) => ({
   originalFile: null,
   originalBlobUrl: null,
   originalDimensions: null,
+  previewFile: null,        // downscaled File used for live preview only
   processedBlobUrl: null,
   processedMeta: null,
   isProcessing: false,
@@ -76,6 +77,7 @@ export const useImageStore = create((set, get) => ({
       originalFile: file,
       originalBlobUrl: blobUrl,
       originalDimensions: null,
+      previewFile: null,
       processedBlobUrl: null,
       processedMeta: null,
       livePreviewUrl: null,
@@ -139,6 +141,10 @@ export const useImageStore = create((set, get) => ({
     const prevLive = get().livePreviewUrl
     if (prevLive) URL.revokeObjectURL(prevLive)
     set({ processedBlobUrl: blobUrl, processedMeta: meta, livePreviewUrl: null, isLivePreviewing: false, showOriginal: false, errorDetail: null })
+  },
+
+  setPreviewFile(file) {
+    set({ previewFile: file })
   },
 
   setDisplayUrl(blobUrl) {
