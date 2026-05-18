@@ -42,7 +42,7 @@ podman compose up --build
 docker compose up --build
 ```
 
-Open [http://localhost:8080](http://localhost:8080).
+Open [http://localhost:9000](http://localhost:9000).
 
 ## Configuration
 
@@ -50,7 +50,7 @@ The container is a plain nginx static server with a single environment variable:
 
 | Variable | Default | Description |
 |---|---|---|
-| `BIND_PORT` | `8080` | Host port the container binds to |
+| `BIND_PORT` | `9000` | Host port the container binds to |
 
 Set it inline or in a `.env` file:
 
@@ -66,7 +66,7 @@ If you want to put MagickUI behind nginx, Traefik, Caddy, etc., use `expose` ins
 services:
   web:
     expose:
-      - "80"
+      - "9000"
     networks:
       - proxy
 
@@ -75,7 +75,7 @@ networks:
     external: true
 ```
 
-Then point your proxy at `http://web:80`.
+Then point your proxy at `http://web:9000`.
 
 ## Development
 
