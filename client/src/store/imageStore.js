@@ -41,6 +41,7 @@ const DEFAULT_OUTPUT = {
   strip: false,
   interlace: false,
   losslessWebp: false,
+  videoLoops: 1,
 }
 
 export const useImageStore = create((set, get) => ({
@@ -53,6 +54,7 @@ export const useImageStore = create((set, get) => ({
   isProcessing: false,
   abortController: null,
   errorDetail: null,
+  isAnimatedGif: false,
 
   // Live preview (temporary, cleared when Apply is pressed)
   livePreviewUrl: null,
@@ -84,6 +86,7 @@ export const useImageStore = create((set, get) => ({
       isLivePreviewing: false,
       showOriginal: true,
       errorDetail: null,
+      isAnimatedGif: false,
       ops: { ...DEFAULT_OPS },
     })
     if (blobUrl) {
@@ -151,6 +154,10 @@ export const useImageStore = create((set, get) => ({
     const prev = get().originalBlobUrl
     if (prev) URL.revokeObjectURL(prev)
     set({ originalBlobUrl: blobUrl })
+  },
+
+  setIsAnimatedGif(val) {
+    set({ isAnimatedGif: val })
   },
 
   setError(errorDetail) {

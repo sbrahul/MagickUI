@@ -31,6 +31,12 @@ export function OutputTab() {
         </div>
       )}
 
+      {/* MP4 loop count */}
+      {output.format === 'mp4' && (
+        <LabeledSlider label="Loops" value={output.videoLoops}
+          onChange={v => updateOutput('videoLoops', v)} min={1} max={10} step={1} />
+      )}
+
       {/* Strip metadata */}
       <div className="flex items-center justify-between">
         <span className="text-xs text-gray-300">Strip metadata (EXIF, ICC)</span>

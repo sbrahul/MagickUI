@@ -14,6 +14,7 @@ All image processing runs locally in your browser via WebAssembly. **No image da
 - **Effects** — charcoal, canny edge detect, solarize, oil paint, vignette, wave
 - **Annotate** — text overlay with gravity picker, font size, color, opacity, rotation, border
 - **Output** — JPEG / PNG / WebP / AVIF / TIFF / GIF; quality, progressive JPEG, lossless WebP, metadata strip, download
+- **Animated GIF → MP4** — export animated GIFs as H.264 MP4 video (client-side via WebCodecs); configurable loop count (1–10)
 - **Live preview** — instant wasm-rendered preview updates as you adjust sliders
 - **Mobile-first** — responsive layout with a slide-up bottom sheet on small screens
 - **Dark / light theme** toggle
@@ -83,7 +84,7 @@ Then point your proxy at `http://web:9000`.
 
 - Node.js 20+
 
-### Client
+### Client local testing
 
 ```bash
 cd client

@@ -15,6 +15,7 @@ const FORMAT_MIME = {
   avif: 'image/avif',
   tiff: 'image/tiff',
   gif:  'image/gif',
+  mp4:  'video/mp4',
 }
 
 export function getMime(format) {

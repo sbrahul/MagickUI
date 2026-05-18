@@ -1,5 +1,6 @@
 import { getIM }    from '../lib/wasm.js'
 import { buildOps, getMime } from '../lib/buildOps.js'
+import { gifToMp4 } from '../lib/gifToMp4.js'
 import { MagickFormat } from '@imagemagick/magick-wasm'
 
 const FORMAT_ENUM = {
@@ -12,6 +13,10 @@ const FORMAT_ENUM = {
 }
 
 export async function processImage({ file, ops, output }) {
+  if (output.format === 'mp4') {
+    return gifToMp4({ file, ops, output })
+  }
+
   const arrayBuffer = await file.arrayBuffer()
   const bytes = new Uint8Array(arrayBuffer)
   const IM = await getIM()

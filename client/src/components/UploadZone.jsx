@@ -2,6 +2,7 @@ import { useDropzone } from 'react-dropzone'
 import { useImageStore } from '../store/imageStore.js'
 import { processImage } from '../api/client.js'
 import { makePreviewFile } from '../lib/previewScale.js'
+import { isAnimatedGif } from '../lib/wasm.js'
 import { Upload } from 'lucide-react'
 import { cn } from '../lib/utils.js'
 
@@ -18,14 +19,17 @@ const ACCEPTED = {
 }
 
 export function UploadZone() {
-  const setFile         = useImageStore(s => s.setFile)
-  const setDisplayUrl   = useImageStore(s => s.setDisplayUrl)
-  const setPreviewFile  = useImageStore(s => s.setPreviewFile)
-  const originalFile    = useImageStore(s => s.originalFile)
-  const originalBlobUrl = useImageStore(s => s.originalBlobUrl)
+  const setFile          = useImageStore(s => s.setFile)
+  const setDisplayUrl    = useImageStore(s => s.setDisplayUrl)
+  const setPreviewFile   = useImageStore(s => s.setPreviewFile)
+  const setIsAnimatedGif = useImageStore(s => s.setIsAnimatedGif)
+  const originalFile     = useImageStore(s => s.originalFile)
+  const originalBlobUrl  = useImageStore(s => s.originalBlobUrl)
 
   async function handleDrop([file]) {
     setFile(file)
+    // Detect animated GIF asynchronously; update store when known.
+    isAnimatedGif(file).then(setIsAnimatedGif)
     const isHeic = file.type === 'image/heic' || file.type === 'image/heif'
       || /\.heic$/i.test(file.name) || /\.heif$/i.test(file.name)
 

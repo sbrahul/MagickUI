@@ -2,7 +2,7 @@
 FROM node:25-alpine AS builder
 WORKDIR /app
 COPY client/package*.json ./
-RUN npm ci
+RUN npm ci --verbose
 COPY client/ ./
 RUN npm run build
 
