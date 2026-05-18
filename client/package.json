@@ -10,7 +10,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@imagemagick/magick-wasm": "^0.0.39",
+    "@imagemagick/magick-wasm": "^0.0.40",
     "@radix-ui/react-dialog": "^1.1.5",
     "@radix-ui/react-slider": "^1.2.2",
     "@radix-ui/react-switch": "^1.1.3",
