@@ -28,8 +28,12 @@ export function TransformTab() {
   function handleToggleMaintainAR(enabled) {
     setLockAspect(enabled)
     // Immediately snap height to the correct ratio when enabling
-    if (enabled && aspectRatio && ops.resize) {
-      updateOp('resize', { ...ops.resize, height: Math.round(ops.resize.width / aspectRatio) })
+    if (enabled && ops.resize) {
+      if (ops.resize.mode === 'percent') {
+        updateOp('resize', { ...ops.resize, height: ops.resize.width })
+      } else if (aspectRatio) {
+        updateOp('resize', { ...ops.resize, height: Math.round(ops.resize.width / aspectRatio) })
+      }
     }
   }
 
@@ -50,19 +54,41 @@ export function TransformTab() {
   function handleResizeWidth(w) {
     const r = ops.resize; if (!r) return
     const next = { ...r, width: w }
-    if (lockAspect && aspectRatio) next.height = Math.round(w / aspectRatio)
+    if (lockAspect) {
+      if (r.mode === 'percent') next.height = w
+      else if (aspectRatio) next.height = Math.round(w / aspectRatio)
+    }
     updateOp('resize', next)
   }
 
   function handleResizeHeight(h) {
     const r = ops.resize; if (!r) return
     const next = { ...r, height: h }
-    if (lockAspect && aspectRatio) next.width = Math.round(h * aspectRatio)
+    if (lockAspect) {
+      if (r.mode === 'percent') next.width = h
+      else if (aspectRatio) next.width = Math.round(h * aspectRatio)
+    }
     updateOp('resize', next)
   }
 
   function handleRotateDelta(delta) {
     updateOp('rotate', (((ops.rotate ?? 0) + delta) % 360 + 360) % 360)
+  }
+
+  function handleModeChange(mode) {
+    const r = ops.resize; if (!r) return
+    if (mode === r.mode) return
+    const next = { ...r, mode }
+    if (mode === 'percent' && r.mode !== 'percent') {
+      // Switching into percent mode: start at 100% rather than keeping stale pixel dimensions
+      next.width = 100
+      next.height = 100
+    } else if (mode !== 'percent' && r.mode === 'percent') {
+      // Switching out of percent mode: restore pixel dimensions
+      next.width  = originalDimensions?.width  ?? 800
+      next.height = originalDimensions?.height ?? 600
+    }
+    updateOp('resize', next)
   }
 
   return (
@@ -89,7 +115,7 @@ export function TransformTab() {
             <div className="flex gap-1">
               {MODES.map(m => (
                 <button key={m}
-                  onClick={() => updateOp('resize', { ...ops.resize, mode: m })}
+                  onClick={() => handleModeChange(m)}
                   className={`flex-1 py-1 rounded text-xs capitalize ${ops.resize.mode === m ? 'bg-blue-600 text-white' : 'bg-white/10 text-gray-300 hover:bg-white/20'}`}>
                   {m}
                 </button>
@@ -97,19 +123,17 @@ export function TransformTab() {
             </div>
             <div className="flex items-center gap-2">
               <div className="flex-1 space-y-0.5">
-                <label className="text-xs text-gray-400">Width px</label>
-                <input type="number" min={1} max={16000} value={ops.resize.width}
+                <label className="text-xs text-gray-400">{ops.resize.mode === 'percent' ? 'Width %' : 'Width px'}</label>
+                <input type="number" min={1} max={ops.resize.mode === 'percent' ? 1000 : 16000} value={ops.resize.width}
                   onChange={e => handleResizeWidth(Number(e.target.value))}
                   className="w-full rounded bg-white/10 px-2 py-1 text-sm text-white" />
               </div>
-              {ops.resize.mode !== 'percent' && (
-                <div className="flex-1 space-y-0.5">
-                  <label className="text-xs text-gray-400">Height px</label>
-                  <input type="number" min={1} max={16000} value={ops.resize.height}
-                    onChange={e => handleResizeHeight(Number(e.target.value))}
-                    className="w-full rounded bg-white/10 px-2 py-1 text-sm text-white" />
-                </div>
-              )}
+              <div className="flex-1 space-y-0.5">
+                <label className="text-xs text-gray-400">{ops.resize.mode === 'percent' ? 'Height %' : 'Height px'}</label>
+                <input type="number" min={1} max={ops.resize.mode === 'percent' ? 1000 : 16000} value={ops.resize.height}
+                  onChange={e => handleResizeHeight(Number(e.target.value))}
+                  className="w-full rounded bg-white/10 px-2 py-1 text-sm text-white" />
+              </div>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-xs text-gray-400">Maintain aspect ratio</span>

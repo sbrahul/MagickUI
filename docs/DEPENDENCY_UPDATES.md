@@ -7,7 +7,7 @@ This document lists concise, safe steps for reviewing and updating npm dependenc
 **Assumptions**
 
 - You have Node and npm installed.
-- Run commands from the project root.
+- Run commands from the `client` folder.
 
 **Scope**
 
