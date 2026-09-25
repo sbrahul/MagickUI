@@ -7,7 +7,7 @@ vi.mock('@imagemagick/magick-wasm', () => {
   const MagickGeometry = vi.fn(function(...a) { this._type='MagickGeometry'; this.args=a })
   const Percentage     = vi.fn(function(v) { this._type='Percentage'; this.value=v })
   const ColorSpace     = { sRGB: 'sRGB', Gray: 'Gray', HSL: 'HSL', CMYK: 'CMYK', Lab: 'Lab', Undefined: 'Undefined' }
-  const Gravity        = { Center: 'C', NorthWest: 'NW', Undefined: 'Undef' }
+  const Gravity        = { Center: 'C', Northwest: 'NW', Undefined: 'Undef' }
   const Interlace      = { Jpeg: 'Jpeg' }
   const PixelInterpolateMethod = { Undefined: 'Undefined' }
   return { MagickColor, MagickGeometry, Percentage, ColorSpace, Gravity, Interlace, PixelInterpolateMethod }

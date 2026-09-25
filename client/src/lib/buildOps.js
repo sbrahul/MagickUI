@@ -35,15 +35,15 @@ export function hexToMagickColor(hex, opacityPct = 100) {
 
 export function gravityEnum(str) {
   const map = {
-    NorthWest: Gravity.NorthWest,
+    NorthWest: Gravity.Northwest,
     North:     Gravity.North,
-    NorthEast: Gravity.NorthEast,
+    NorthEast: Gravity.Northeast,
     West:      Gravity.West,
     Center:    Gravity.Center,
     East:      Gravity.East,
-    SouthWest: Gravity.SouthWest,
+    SouthWest: Gravity.Southwest,
     South:     Gravity.South,
-    SouthEast: Gravity.SouthEast,
+    SouthEast: Gravity.Southeast,
   }
   return map[str] ?? Gravity.Undefined
 }
@@ -189,7 +189,8 @@ export function buildOps(image, ops, output) {
     image.settings.fillColor = hexToMagickColor(color ?? '#ffffff', opacity ?? 100)
     image.annotate(
       text,
-      new MagickGeometry(x ?? 10, y ?? 10, 0, 0),
+      // A 0x0 box makes ImageMagick ignore the offset and clip the text at the top edge.
+      new MagickGeometry(x ?? 10, y ?? 10, image.width, image.height),
       gravityEnum(gravity ?? 'NorthWest'),
       rotation ?? 0,
     )

@@ -7,7 +7,7 @@ vi.mock('@imagemagick/magick-wasm', () => {
   const MagickGeometry = vi.fn(function(...a) { this._type='MagickGeometry'; this.args=a })
   const Percentage     = vi.fn(function(v) { this._type='Percentage'; this.value=v })
   const ColorSpace     = { Undefined: 'Undefined' }
-  const Gravity        = { NorthWest: 'NW', Undefined: 'Undef' }
+  const Gravity        = { Northwest: 'NW', Undefined: 'Undef' }
   const Interlace      = { Jpeg: 'Jpeg' }
   const PixelInterpolateMethod = { Undefined: 'Undefined' }
   return { MagickColor, MagickGeometry, Percentage, ColorSpace, Gravity, Interlace, PixelInterpolateMethod }
@@ -69,8 +69,10 @@ describe('buildOps – output flags', () => {
     expect(img.settings.fontPointsize).toBe(24)
     expect(img.settings.font).toBe('NotoSans')
     expect(img.annotate).toHaveBeenCalledOnce()
-    const [text] = img.annotate.mock.calls[0]
+    const [text, geometry, gravity] = img.annotate.mock.calls[0]
     expect(text).toBe('Hello')
+    expect(geometry.args).toEqual([5, 5, 800, 600])
+    expect(gravity).toBe('NW')
   })
 
   it('skips annotate when text is empty', () => {

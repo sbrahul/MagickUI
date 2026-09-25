@@ -21,6 +21,25 @@ const ANNOTATE_DEFAULTS = {
   color: '#ffffff', opacity: 100, x: 10, y: 10, rotation: 0,
 }
 
+// Sends only complete #rrggbb values; hexToMagickColor turns a partial one like "#ff" into NaN channels.
+function HexInput({ value, onChange, ...props }) {
+  const [text, setText] = useState(value)
+  const [prevValue, setPrevValue] = useState(value)
+  if (value !== prevValue) {
+    setPrevValue(value)
+    setText(value)
+  }
+
+  function handleChange(e) {
+    const next = e.target.value
+    if (!/^#[0-9a-fA-F]{0,6}$/.test(next)) return
+    setText(next)
+    if (next.length === 7) onChange(next)
+  }
+
+  return <input type="text" value={text} onChange={handleChange} {...props} />
+}
+
 export function AnnotateTab() {
   const ops      = useImageStore(s => s.ops)
   const updateOp = useImageStore(s => s.updateOp)
@@ -87,8 +106,7 @@ export function AnnotateTab() {
               {showPicker && (
                 <div>
                   <HexColorPicker color={ann.color} onChange={c => update({ color: c })} />
-                  <input type="text" value={ann.color}
-                    onChange={e => /^#[0-9a-fA-F]{0,6}$/.test(e.target.value) && update({ color: e.target.value })}
+                  <HexInput value={ann.color} onChange={c => update({ color: c })}
                     className="mt-1 w-full rounded bg-white/10 px-2 py-1 text-xs text-white font-mono" />
                 </div>
               )}
