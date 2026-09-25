@@ -67,6 +67,7 @@ describe('buildOps – output flags', () => {
       { format: 'jpeg', quality: 85, strip: false, interlace: false, losslessWebp: false }
     )
     expect(img.settings.fontPointsize).toBe(24)
+    expect(img.settings.font).toBe('NotoSans')
     expect(img.annotate).toHaveBeenCalledOnce()
     const [text] = img.annotate.mock.calls[0]
     expect(text).toBe('Hello')

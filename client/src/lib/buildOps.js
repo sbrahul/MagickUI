@@ -18,6 +18,8 @@ const FORMAT_MIME = {
   mp4:  'video/mp4',
 }
 
+export const FONT_NAME = 'NotoSans'
+
 export function getMime(format) {
   return FORMAT_MIME[format] ?? 'application/octet-stream'
 }
@@ -182,6 +184,7 @@ export function buildOps(image, ops, output) {
   // 9. Annotate
   if (ops.annotate?.text) {
     const { text, gravity, size, color, opacity, x, y, rotation } = ops.annotate
+    image.settings.font = FONT_NAME
     image.settings.fontPointsize = size ?? 36
     image.settings.fillColor = hexToMagickColor(color ?? '#ffffff', opacity ?? 100)
     image.annotate(

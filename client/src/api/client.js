@@ -1,4 +1,4 @@
-import { getIM }    from '../lib/wasm.js'
+import { getIM, loadFont } from '../lib/wasm.js'
 import { buildOps, getMime } from '../lib/buildOps.js'
 import { gifToMp4 } from '../lib/gifToMp4.js'
 import { MagickFormat } from '@imagemagick/magick-wasm'
@@ -20,6 +20,7 @@ export async function processImage({ file, ops, output }) {
   const arrayBuffer = await file.arrayBuffer()
   const bytes = new Uint8Array(arrayBuffer)
   const IM = await getIM()
+  if (ops.annotate?.text) await loadFont()
 
   return new Promise((resolve, reject) => {
     try {

@@ -1,6 +1,6 @@
 import { MagickFormat } from '@imagemagick/magick-wasm'
 import { Output, Mp4OutputFormat, BufferTarget, CanvasSource, QUALITY_HIGH } from 'mediabunny'
-import { getIM } from './wasm.js'
+import { getIM, loadFont } from './wasm.js'
 import { buildOps } from './buildOps.js'
 
 /**
@@ -22,6 +22,7 @@ export async function gifToMp4({ file, ops, output }) {
 
   const bytes = new Uint8Array(await file.arrayBuffer())
   const IM = await getIM()
+  if (ops.annotate?.text) await loadFont()
 
   // ── Step 1: extract all frame PNG bytes inside the synchronous IM callback ──
   const { frameDataArray, width, height } = await new Promise((resolve, reject) => {

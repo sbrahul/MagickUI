@@ -1,7 +1,16 @@
-import { initializeImageMagick, ImageMagick } from '@imagemagick/magick-wasm'
+import { initializeImageMagick, ImageMagick, Magick } from '@imagemagick/magick-wasm'
 import wasmUrl from '@imagemagick/magick-wasm/magick.wasm?url'
+import fontUrl from '../assets/fonts/NotoSans-Regular.ttf?url'
+import { FONT_NAME } from './buildOps.js'
 
 let initializing = null
+let fontLoading = null
+
+async function fetchBytes(url) {
+  const r = await fetch(url)
+  if (!r.ok) throw new Error(`Failed to load ${url}: HTTP ${r.status}`)
+  return new Uint8Array(await r.arrayBuffer())
+}
 
 export async function getIM() {
   if (!initializing) {
@@ -12,6 +21,16 @@ export async function getIM() {
   }
   await initializing
   return ImageMagick
+}
+
+// The wasm build has no fonts, so annotate fails with UnableToReadFont until one is added.
+export async function loadFont() {
+  if (!fontLoading) {
+    fontLoading = Promise.all([getIM(), fetchBytes(fontUrl)])
+      .then(([, bytes]) => Magick.addFont(FONT_NAME, bytes))
+      .catch(err => { fontLoading = null; throw err })
+  }
+  await fontLoading
 }
 
 /**
