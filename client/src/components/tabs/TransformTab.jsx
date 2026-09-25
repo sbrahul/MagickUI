@@ -5,6 +5,7 @@ import { useImageStore } from '../../store/imageStore.js'
 import { OpSection }      from '../ui/op-section.jsx'
 import { LabeledSlider }  from '../ui/labeled-slider.jsx'
 import { Switch }         from '../ui/switch.jsx'
+import { NumberInput }    from '../ui/number-input.jsx'
 
 const MODES = ['fit', 'fill', 'exact', 'percent']
 
@@ -19,14 +20,6 @@ export function TransformTab() {
   const [crop, setCrop] = useState({ unit: '%', x: 0, y: 0, width: 100, height: 100 })
   const imgRef   = useRef(null)
   const [lockAspect, setLockAspect] = useState(false)
-
-  // Local text so partial input like "-" is not overwritten with the store's number.
-  const [rotateText, setRotateText] = useState(String(ops.rotate))
-  const [prevRotate, setPrevRotate] = useState(ops.rotate)
-  if (ops.rotate !== prevRotate) {
-    setPrevRotate(ops.rotate)
-    setRotateText(String(ops.rotate))
-  }
 
   // Original image aspect ratio (width ÷ height) — used to constrain resize inputs
   const aspectRatio = originalDimensions
@@ -83,12 +76,6 @@ export function TransformTab() {
     updateOp('rotate', (((ops.rotate ?? 0) + delta) % 360 + 360) % 360)
   }
 
-  function handleRotateInput(text) {
-    setRotateText(text)
-    const n = Number(text)
-    if (text.trim() !== '' && Number.isFinite(n)) updateOp('rotate', n)
-  }
-
   function handleModeChange(mode) {
     const r = ops.resize; if (!r) return
     if (mode === r.mode) return
@@ -138,14 +125,14 @@ export function TransformTab() {
             <div className="flex items-center gap-2">
               <div className="flex-1 space-y-0.5">
                 <label className="text-xs text-gray-400">{ops.resize.mode === 'percent' ? 'Width %' : 'Width px'}</label>
-                <input type="number" min={1} max={ops.resize.mode === 'percent' ? 1000 : 16000} value={ops.resize.width}
-                  onChange={e => handleResizeWidth(Number(e.target.value))}
+                <NumberInput min={1} max={ops.resize.mode === 'percent' ? 1000 : 16000} value={ops.resize.width}
+                  onChange={handleResizeWidth}
                   className="w-full rounded bg-white/10 px-2 py-1 text-sm text-white" />
               </div>
               <div className="flex-1 space-y-0.5">
                 <label className="text-xs text-gray-400">{ops.resize.mode === 'percent' ? 'Height %' : 'Height px'}</label>
-                <input type="number" min={1} max={ops.resize.mode === 'percent' ? 1000 : 16000} value={ops.resize.height}
-                  onChange={e => handleResizeHeight(Number(e.target.value))}
+                <NumberInput min={1} max={ops.resize.mode === 'percent' ? 1000 : 16000} value={ops.resize.height}
+                  onChange={handleResizeHeight}
                   className="w-full rounded bg-white/10 px-2 py-1 text-sm text-white" />
               </div>
             </div>
@@ -188,8 +175,8 @@ export function TransformTab() {
           </div>
           <div className="flex items-center gap-2">
             <label className="text-xs text-gray-400 w-24 flex-shrink-0">Free rotate °</label>
-            <input type="number" min={-360} max={360} value={rotateText}
-              onChange={e => handleRotateInput(e.target.value)}
+            <NumberInput min={-360} max={360} value={ops.rotate}
+              onChange={v => updateOp('rotate', v)}
               className="w-full rounded bg-white/10 px-2 py-1 text-sm text-white" />
           </div>
           <div className="flex items-center gap-2">

@@ -4,6 +4,7 @@ import { useImageStore }  from '../../store/imageStore.js'
 import { OpSection }      from '../ui/op-section.jsx'
 import { LabeledSlider }  from '../ui/labeled-slider.jsx'
 import { Switch }         from '../ui/switch.jsx'
+import { NumberInput }    from '../ui/number-input.jsx'
 
 const GRAVITY_GRID = [
   ['NorthWest', 'North', 'NorthEast'],
@@ -122,14 +123,14 @@ export function AnnotateTab() {
             <div className="flex gap-2">
               <div className="flex-1 space-y-0.5">
                 <label className="text-xs text-gray-400">X</label>
-                <input type="number" min={-5000} max={5000} value={ann.x}
-                  onChange={e => update({ x: Number(e.target.value) })}
+                <NumberInput min={-5000} max={5000} value={ann.x}
+                  onChange={v => update({ x: v })}
                   className="w-full rounded bg-white/10 px-2 py-1 text-sm text-white" />
               </div>
               <div className="flex-1 space-y-0.5">
                 <label className="text-xs text-gray-400">Y</label>
-                <input type="number" min={-5000} max={5000} value={ann.y}
-                  onChange={e => update({ y: Number(e.target.value) })}
+                <NumberInput min={-5000} max={5000} value={ann.y}
+                  onChange={v => update({ y: v })}
                   className="w-full rounded bg-white/10 px-2 py-1 text-sm text-white" />
               </div>
             </div>
