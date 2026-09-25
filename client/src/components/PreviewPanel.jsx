@@ -6,6 +6,7 @@ import { useImageStore } from '../store/imageStore.js'
 export function PreviewPanel() {
   const originalBlobUrl    = useImageStore(s => s.originalBlobUrl)
   const processedBlobUrl   = useImageStore(s => s.processedBlobUrl)
+  const processedPreviewUrl = useImageStore(s => s.processedPreviewUrl)
   const processedMeta      = useImageStore(s => s.processedMeta)
   const livePreviewUrl     = useImageStore(s => s.livePreviewUrl)
   const isLivePreviewing   = useImageStore(s => s.isLivePreviewing)
@@ -13,12 +14,16 @@ export function PreviewPanel() {
   const toggleLivePreview  = useImageStore(s => s.toggleLivePreview)
   const showOriginal       = useImageStore(s => s.showOriginal)
   const isProcessing       = useImageStore(s => s.isProcessing)
+  const isDecoding         = useImageStore(s => s.isDecoding)
   const togglePreview      = useImageStore(s => s.togglePreview)
   const [zoom, setZoom]    = useState(1)
 
   // Priority: live preview > applied result > original
-  const src = livePreviewUrl ?? (showOriginal ? originalBlobUrl : processedBlobUrl)
+  const showingProcessed = !livePreviewUrl && !showOriginal
+  const src = livePreviewUrl ?? (showOriginal ? originalBlobUrl : processedPreviewUrl ?? processedBlobUrl)
+  const isVideo = showingProcessed && processedMeta?.format === 'mp4'
   const canToggle = !!processedBlobUrl && !isLivePreviewing
+  const MediaTag = isVideo ? motion.video : motion.img
 
   if (!originalBlobUrl) {
     return (
@@ -81,10 +86,12 @@ export function PreviewPanel() {
 
       <div className="flex-1 overflow-auto flex items-center justify-center">
         <AnimatePresence mode="wait">
-          <motion.img
+          <MediaTag
             key={src}
             src={src}
-            alt={isLivePreviewing ? 'live preview' : showOriginal ? 'original' : 'processed'}
+            {...(isVideo
+              ? { autoPlay: true, loop: true, muted: true, playsInline: true, 'aria-label': 'processed' }
+              : { alt: isLivePreviewing ? 'live preview' : showOriginal ? 'original' : 'processed' })}
             onClick={canToggle ? togglePreview : undefined}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -94,6 +101,7 @@ export function PreviewPanel() {
               transform: `scale(${zoom})`,
               transformOrigin: 'center',
               cursor: canToggle ? 'pointer' : 'default',
+              background: 'repeating-conic-gradient(#808080 0 25%, #a0a0a0 0 50%) 50% / 16px 16px',
             }}
             className="max-w-full max-h-full object-contain rounded"
           />
@@ -105,6 +113,7 @@ export function PreviewPanel() {
           <>
             <span>{processedMeta.format?.toUpperCase()}</span>
             <span>{(processedMeta.sizeBytes / 1024).toFixed(1)} KB</span>
+            {processedPreviewUrl && <span>shown as a PNG/JPEG preview</span>}
           </>
         ) : (
           <span className="invisible">placeholder</span>
@@ -112,14 +121,15 @@ export function PreviewPanel() {
       </div>
 
       <AnimatePresence>
-        {isProcessing && (
+        {(isProcessing || isDecoding) && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-xl"
+            className={`absolute inset-0 flex flex-col gap-3 items-center justify-center rounded-xl ${isDecoding ? 'bg-[#111]' : 'bg-black/60'}`}
           >
             <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            {isDecoding && <span className="text-xs text-gray-400">Decoding…</span>}
           </motion.div>
         )}
       </AnimatePresence>

@@ -25,7 +25,7 @@ describe('getMime', () => {
   })
 
   it('returns application/octet-stream for unknown format', () => {
-    expect(getMime('bmp')).toBe('application/octet-stream')
+    expect(getMime('xyz')).toBe('application/octet-stream')
   })
 })
 

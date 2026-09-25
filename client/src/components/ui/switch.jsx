@@ -1,9 +1,10 @@
 import * as RadixSwitch from '@radix-ui/react-switch'
 import { cn } from '../../lib/utils.js'
 
-export function Switch({ checked, onCheckedChange, disabled = false, className }) {
+export function Switch({ checked, onCheckedChange, disabled = false, className, ...props }) {
   return (
     <RadixSwitch.Root
+      {...props}
       checked={checked}
       onCheckedChange={onCheckedChange}
       disabled={disabled}

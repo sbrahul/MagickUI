@@ -1,6 +1,7 @@
 import { X, Download } from 'lucide-react'
 import { useImageStore } from '../store/imageStore.js'
 import { processImage } from '../api/client.js'
+import { extFor } from '../lib/formats.js'
 import { UploadZone }    from './UploadZone.jsx'
 import { FormatPicker }  from './FormatPicker.jsx'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs.jsx'
@@ -9,6 +10,7 @@ import { ColorTab }      from './tabs/ColorTab.jsx'
 import { BlurTab }       from './tabs/BlurTab.jsx'
 import { EffectsTab }    from './tabs/EffectsTab.jsx'
 import { AnnotateTab }   from './tabs/AnnotateTab.jsx'
+import { OverlayTab }    from './tabs/OverlayTab.jsx'
 import { OutputTab }     from './tabs/OutputTab.jsx'
 
 const TABS = [
@@ -17,6 +19,7 @@ const TABS = [
   { id: 'blur',      label: 'Blur',      Component: BlurTab      },
   { id: 'effects',   label: 'Effects',   Component: EffectsTab   },
   { id: 'annotate',  label: 'Annotate',  Component: AnnotateTab  },
+  { id: 'overlay',   label: 'Overlay',   Component: OverlayTab   },
   { id: 'output',    label: 'Output',    Component: OutputTab    },
 ]
 
@@ -27,6 +30,7 @@ export function Sidebar() {
   const processedMeta    = useImageStore(s => s.processedMeta)
   const output           = useImageStore(s => s.output)
   const isProcessing  = useImageStore(s => s.isProcessing)
+  const isDecoding    = useImageStore(s => s.isDecoding)
   const setProcessing = useImageStore(s => s.setProcessing)
   const setProcessed  = useImageStore(s => s.setProcessed)
   const setError      = useImageStore(s => s.setError)
@@ -34,11 +38,10 @@ export function Sidebar() {
   const resetOps      = useImageStore(s => s.resetOps)
 
   async function applyChanges() {
-    if (!originalFile || isProcessing) return
+    if (!originalFile || isProcessing || isDecoding) return
     setProcessing(true)
     try {
-      const { blobUrl, meta } = await processImage({ file: originalFile, ops, output })
-      setProcessed(blobUrl, meta)
+      setProcessed(await processImage({ file: originalFile, ops, output }))
     } catch (err) {
       setError(err)
     } finally {
@@ -80,7 +83,7 @@ export function Sidebar() {
         <div className="flex gap-2">
           <button
             onClick={applyChanges}
-            disabled={!originalFile || isProcessing}
+            disabled={!originalFile || isProcessing || isDecoding}
             className="flex-1 py-2 rounded text-sm font-medium bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-colors"
           >
             {isProcessing ? 'Processing…' : 'Apply'}
@@ -88,7 +91,7 @@ export function Sidebar() {
           {processedBlobUrl && (
             <a
               href={processedBlobUrl}
-              download={`output.${output.format}`}
+              download={`output.${extFor(processedMeta?.format)}`}
               title={processedMeta ? `${(processedMeta.sizeBytes / 1024).toFixed(1)} KB` : undefined}
               className="flex items-center justify-center gap-1.5 px-3 py-2 rounded text-sm font-medium bg-green-700 hover:bg-green-600 text-white transition-colors"
             >

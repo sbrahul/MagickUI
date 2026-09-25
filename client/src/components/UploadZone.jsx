@@ -1,28 +1,25 @@
 import { useDropzone } from 'react-dropzone'
+import { toast } from 'sonner'
 import { useImageStore } from '../store/imageStore.js'
-import { processImage } from '../api/client.js'
+import { decodeForDisplay } from '../api/client.js'
 import { makePreviewFile } from '../lib/previewScale.js'
 import { isAnimatedGif } from '../lib/wasm.js'
+import { buildAcceptMap, INPUT_LABEL } from '../lib/formats.js'
 import { Upload } from 'lucide-react'
 import { cn } from '../lib/utils.js'
 
-const ACCEPTED = {
-  'image/jpeg': ['.jpg', '.jpeg'],
-  'image/png':  ['.png'],
-  'image/webp': ['.webp'],
-  'image/gif':  ['.gif'],
-  'image/tiff': ['.tiff', '.tif'],
-  'image/bmp':  ['.bmp'],
-  'image/heic': ['.heic', '.heif'],
-  'image/heif': ['.heif'],
-  'image/avif': ['.avif'],
-}
+const ACCEPTED = buildAcceptMap()
+const MAX_SIZE = 50 * 1024 * 1024
+
+// Wasm runs on the main thread, so let the "Decoding…" spinner paint before it blocks.
+const nextPaint = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
 
 export function UploadZone() {
   const setFile          = useImageStore(s => s.setFile)
   const setDisplayUrl    = useImageStore(s => s.setDisplayUrl)
   const setPreviewFile   = useImageStore(s => s.setPreviewFile)
   const setIsAnimatedGif = useImageStore(s => s.setIsAnimatedGif)
+  const setDecoding      = useImageStore(s => s.setDecoding)
   const originalFile     = useImageStore(s => s.originalFile)
   const originalBlobUrl  = useImageStore(s => s.originalBlobUrl)
 
@@ -30,38 +27,46 @@ export function UploadZone() {
     setFile(file)
     // Detect animated GIF asynchronously; update store when known.
     isAnimatedGif(file).then(setIsAnimatedGif)
-    const isHeic = file.type === 'image/heic' || file.type === 'image/heif'
-      || /\.heic$/i.test(file.name) || /\.heif$/i.test(file.name)
+    const isCurrent = () => useImageStore.getState().originalFile === file
 
-    if (isHeic) {
-      try {
-        // Browser cannot render HEIC natively; convert to JPEG via WASM for display only.
-        // originalFile is kept as-is so processing still operates on the original.
-        const { blobUrl } = await processImage({
-          file,
-          ops: {},
-          output: { format: 'jpeg', quality: 85, strip: false, interlace: false, losslessWebp: false },
-        })
-        setDisplayUrl(blobUrl)
-        // Scale down the WASM-decoded JPEG for live preview
-        const jpeg = await fetch(blobUrl).then(r => r.blob())
-        const pf = await makePreviewFile(jpeg)
-        if (pf) setPreviewFile(pf)
-      } catch {
-        // Leave the broken img — better than crashing
-      }
-    } else {
-      // Scale down directly from the uploaded file
-      const pf = await makePreviewFile(file)
-      if (pf) setPreviewFile(pf)
+    // The browser decodes most formats itself; makePreviewFile returns null when it cannot.
+    const pf = await makePreviewFile(file)
+    if (pf) {
+      if (isCurrent()) setPreviewFile(pf)
+      return
     }
+
+    // originalFile stays as uploaded; the converted copy is for display and live preview only.
+    setDecoding(true)
+    try {
+      await nextPaint()
+      const { blobUrl, width, height } = await decodeForDisplay(file)
+      if (!isCurrent()) { URL.revokeObjectURL(blobUrl); return }
+      setDisplayUrl(blobUrl, { width, height })
+      const converted = await fetch(blobUrl).then(r => r.blob())
+      const convertedPreview = await makePreviewFile(converted)
+      if (convertedPreview && isCurrent()) setPreviewFile(convertedPreview)
+    } catch (err) {
+      if (isCurrent()) toast.error(`Could not open ${file.name}: ${err?.message ?? err}`)
+    } finally {
+      if (isCurrent()) setDecoding(false)
+    }
+  }
+
+  function handleReject([rejection]) {
+    const { file, errors } = rejection
+    const reason = errors[0]?.code === 'file-too-large'
+      ? `is larger than ${MAX_SIZE / 1024 / 1024} MB`
+      : 'is not a supported image format'
+    toast.error(`${file.name} ${reason}`)
   }
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: ACCEPTED,
-    maxSize: 50 * 1024 * 1024,
+    maxSize: MAX_SIZE,
     multiple: false,
     onDropAccepted: handleDrop,
+    onDropRejected: handleReject,
   })
 
   if (originalFile) {
@@ -97,7 +102,7 @@ export function UploadZone() {
       <p className="text-sm text-center">
         Drop an image here, or <span className="underline">browse</span>
       </p>
-      <p className="text-xs text-center">JPEG · PNG · WebP · HEIC · AVIF · GIF · TIFF — max 50 MB</p>
+      <p className="text-xs text-center">{INPUT_LABEL} — max 50 MB</p>
     </div>
   )
 }

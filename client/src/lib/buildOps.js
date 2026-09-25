@@ -1,28 +1,28 @@
 import {
+  AlphaAction,
+  AutoThresholdMethod,
+  Channels,
   ColorSpace,
+  CompositeOperator,
+  DitherMethod,
+  EvaluateOperator,
   Gravity,
   Interlace,
   MagickColor,
   MagickGeometry,
+  NoiseType,
   Percentage,
   PixelInterpolateMethod,
+  Point,
+  QuantizeSettings,
 } from '@imagemagick/magick-wasm'
+import { dropsAlpha, usesQuality } from './formats.js'
 
-const FORMAT_MIME = {
-  jpeg: 'image/jpeg',
-  png:  'image/png',
-  webp: 'image/webp',
-  avif: 'image/avif',
-  tiff: 'image/tiff',
-  gif:  'image/gif',
-  mp4:  'video/mp4',
-}
+export { getMime } from './formats.js'
 
 export const FONT_NAME = 'NotoSans'
 
-export function getMime(format) {
-  return FORMAT_MIME[format] ?? 'application/octet-stream'
-}
+const ICO_SIZES = [256, 48, 32, 16]
 
 export function hexToMagickColor(hex, opacityPct = 100) {
   const h = hex.replace('#', '')
@@ -48,6 +48,19 @@ export function gravityEnum(str) {
   return map[str] ?? Gravity.Undefined
 }
 
+// Ops that add transparency, so the live preview must keep alpha to show them.
+export function needsAlpha(ops) {
+  return !!(ops.transparent || ops.shadow)
+}
+
+export function noiseTypeEnum(str) {
+  return NoiseType[str] ?? NoiseType.Gaussian
+}
+
+export function autoThresholdEnum(str) {
+  return AutoThresholdMethod[str] ?? AutoThresholdMethod.OTSU
+}
+
 export function colorspaceEnum(str) {
   const map = {
     sRGB: ColorSpace.sRGB,
@@ -59,7 +72,8 @@ export function colorspaceEnum(str) {
   return map[str] ?? ColorSpace.Undefined
 }
 
-export function buildOps(image, ops, output) {
+// ctx.animation is shared by all frames of one GIF so per-frame ops stay consistent.
+export function buildOps(image, ops, output, ctx = {}) {
   // 1. Auto-orient (EXIF)
   if (ops.autoOrient) image.autoOrient()
 
@@ -94,6 +108,18 @@ export function buildOps(image, ops, output) {
   }
 
   // 4. Geometry
+  if (ops.deskew) {
+    image.backgroundColor = hexToMagickColor(ops.rotateBg ?? '#000000')
+    const threshold = new Percentage(ops.deskew.threshold)
+    if (ctx.animation) {
+      // One angle for every frame, measured on the first, so the animation does not jitter.
+      ctx.animation.deskewAngle ??= image.clone(c => c.deskew(threshold))
+      image.rotate(ctx.animation.deskewAngle)
+    } else {
+      image.deskew(threshold, !!ops.deskew.autoCrop)
+    }
+    image.resetPage()
+  }
   if (ops.rotate && ops.rotate !== 0) {
     image.backgroundColor = hexToMagickColor(ops.rotateBg ?? '#000000')
     image.rotate(ops.rotate)
@@ -101,6 +127,11 @@ export function buildOps(image, ops, output) {
   if (ops.flip)  image.flip()
   if (ops.flop)  image.flop()
   if (ops.trim)  { image.trim(); image.resetPage() }
+  // Before colour ops, so the picked colour matches the original image.
+  if (ops.transparent) {
+    image.colorFuzz = new Percentage(ops.transparent.fuzz)
+    image.transparent(hexToMagickColor(ops.transparent.color))
+  }
 
   // 5. Color / Tone
   if (ops.brightnessContrast) {
@@ -131,6 +162,9 @@ export function buildOps(image, ops, output) {
   if (ops.normalize)  image.normalize()
   if (ops.autoLevel)  image.autoLevel()
   if (ops.autoGamma)  image.autoGamma()
+  if (ops.clahe) {
+    image.clahe(new Percentage(ops.clahe.tile), new Percentage(ops.clahe.tile), 128, ops.clahe.clip)
+  }
   if (ops.sepiaTone !== null && ops.sepiaTone !== undefined) {
     image.sepiaTone(new Percentage(ops.sepiaTone))
   }
@@ -174,6 +208,27 @@ export function buildOps(image, ops, output) {
   if (ops.wave) {
     image.wave(PixelInterpolateMethod.Undefined, ops.wave.amplitude, ops.wave.wavelength)
   }
+  if (ops.grain) {
+    // The two-argument addNoise overload drops attenuate in magick-wasm 0.0.43.
+    image.addNoise(noiseTypeEnum(ops.grain.type), ops.grain.amount, Channels.Undefined)
+  }
+
+  // 7b. Colour reduction, after effects so the result keeps its promise (pure B&W, N colours)
+  if (ops.threshold) {
+    // Without grayscale, threshold works per channel and gives 8 colours.
+    image.grayscale()
+    if (ops.threshold.mode === 'auto') image.autoThreshold(autoThresholdEnum(ops.threshold.method))
+    else image.threshold(new Percentage(ops.threshold.value))
+  }
+  if (ops.quantize) {
+    const settings = new QuantizeSettings()
+    settings.colors = ops.quantize.colors
+    settings.ditherMethod = ops.quantize.dither ? DitherMethod.FloydSteinberg : DitherMethod.No
+    image.quantize(settings)
+  }
+
+  // 8a. Image watermark, before the border so the border does not change its size or position
+  if (ops.watermark && ctx.watermark) addWatermark(image, ctx.watermark, ops.watermark)
 
   // 8. Border
   if (ops.border) {
@@ -196,13 +251,75 @@ export function buildOps(image, ops, output) {
     )
   }
 
+  // 9b. Drop shadow, last so it belongs to the framed and annotated picture
+  if (ops.shadow) addShadow(image, ops.shadow)
+
   // 10. Output flags
-  image.quality = output.quality ?? 85
+  if (image.hasAlpha && dropsAlpha(output)) {
+    image.backgroundColor = hexToMagickColor(output.flattenBg ?? '#ffffff')
+    image.alpha(AlphaAction.Remove)
+  }
+  // PNG reads quality as zlib level and filter, so a low JPEG quality would make PNGs larger.
+  if (usesQuality(output.format)) image.quality = output.quality ?? 85
   if (output.strip) image.strip()
   if (output.interlace && output.format === 'jpeg') {
     image.interlace = Interlace.Jpeg
   }
+  // Coder options must be defines: setArtifact is ignored once image.quality is set.
   if (output.losslessWebp && output.format === 'webp') {
-    image.setArtifact('webp:lossless', 'true')
+    image.settings.setDefine('webp:lossless', 'true')
   }
+  if (output.jpegMaxKb && output.format === 'jpeg') {
+    image.settings.setDefine('jpeg:extent', `${output.jpegMaxKb}kb`)
+  }
+  if (output.colors && (output.format === 'png' || output.format === 'gif')) {
+    const settings = new QuantizeSettings()
+    settings.colors = output.colors
+    // QuantizeSettings dithers (Riemersma) unless told otherwise.
+    settings.ditherMethod = output.dither ? DitherMethod.FloydSteinberg : DitherMethod.No
+    image.quantize(settings)
+  }
+  if (output.format === 'ico') prepareIcon(image)
+}
+
+// Scale and offsets are % of the base width, so the downscaled live preview matches.
+function addWatermark(image, source, { gravity, scale, opacity, x, y }) {
+  const px = pct => Math.round(image.width * pct / 100)
+  // A clone, because the same logo is reused for every GIF frame.
+  source.clone(logo => {
+    logo.resize(new MagickGeometry(`${Math.max(1, px(scale))}x`))
+    if (opacity < 100) {
+      logo.alpha(AlphaAction.Set)
+      logo.evaluate(Channels.Alpha, EvaluateOperator.Multiply, opacity / 100)
+    }
+    image.compositeGravity(logo, gravityEnum(gravity), CompositeOperator.Over, new Point(px(x), px(y)))
+  })
+}
+
+// shadow() replaces the image it runs on, so it runs on a clone that is then put underneath.
+function addShadow(image, { x, y, sigma, opacity, color }) {
+  image.resetPage()
+  image.alpha(AlphaAction.Set)
+  image.clone(shadow => {
+    shadow.shadow(x, y, sigma, new Percentage(opacity), hexToMagickColor(color))
+    const sx = shadow.page.x, sy = shadow.page.y
+    const left = Math.max(0, -sx), top = Math.max(0, -sy)
+    const width  = Math.max(image.width,  sx + shadow.width)  + left
+    const height = Math.max(image.height, sy + shadow.height) + top
+    image.backgroundColor = new MagickColor(0, 0, 0, 0)
+    image.extent(new MagickGeometry(-left, -top, width, height))
+    image.composite(shadow, CompositeOperator.DstOver, new Point(left + sx, top + sy))
+  })
+  image.resetPage()
+}
+
+// Pads to a square first so icon:auto-resize does not stretch the image.
+function prepareIcon(image) {
+  const side = Math.max(image.width, image.height)
+  if (image.width !== image.height) {
+    image.backgroundColor = new MagickColor(0, 0, 0, 0)
+    image.extent(side, side, Gravity.Center)
+  }
+  const sizes = ICO_SIZES.filter(s => s <= side)
+  if (sizes.length) image.settings.setDefine('icon:auto-resize', sizes.join(','))
 }

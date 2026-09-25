@@ -1,15 +1,6 @@
 import { useImageStore } from '../store/imageStore.js'
 import { cn } from '../lib/utils.js'
-
-const FORMATS = [
-  { value: 'jpeg', label: 'JPEG' },
-  { value: 'png',  label: 'PNG'  },
-  { value: 'webp', label: 'WebP' },
-  { value: 'avif', label: 'AVIF' },
-  { value: 'tiff', label: 'TIFF' },
-  { value: 'gif',  label: 'GIF'  },
-  { value: 'mp4',  label: 'MP4', animatedGifOnly: true },
-]
+import { OUTPUT_FORMATS } from '../lib/formats.js'
 
 export function FormatPicker() {
   const output         = useImageStore(s => s.output)
@@ -22,7 +13,7 @@ export function FormatPicker() {
         Output Format
       </p>
       <div className="grid grid-cols-4 gap-1.5">
-        {FORMATS.map(f => {
+        {OUTPUT_FORMATS.map(f => {
           const disabled = f.animatedGifOnly && !isAnimatedGif
           return (
             <button

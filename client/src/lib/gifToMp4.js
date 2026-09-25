@@ -1,6 +1,6 @@
 import { MagickFormat } from '@imagemagick/magick-wasm'
 import { Output, Mp4OutputFormat, BufferTarget, CanvasSource, QUALITY_HIGH } from 'mediabunny'
-import { getIM, loadFont } from './wasm.js'
+import { getIM, loadFont, readLogo, withImage } from './wasm.js'
 import { buildOps } from './buildOps.js'
 
 /**
@@ -21,19 +21,21 @@ export async function gifToMp4({ file, ops, output }) {
   }
 
   const bytes = new Uint8Array(await file.arrayBuffer())
+  const logoBytes = await readLogo(ops)
   const IM = await getIM()
   if (ops.annotate?.text) await loadFont()
 
   // ── Step 1: extract all frame PNG bytes inside the synchronous IM callback ──
   const { frameDataArray, width, height } = await new Promise((resolve, reject) => {
     try {
-      IM.readCollection(bytes, frames => {
+      withImage(IM, logoBytes, watermark => IM.readCollection(bytes, frames => {
         try {
           frames.coalesce()
 
           const frameDataArray = []
           let width = 0
           let height = 0
+          const ctx = { animation: {}, watermark }
 
           for (let i = 0; i < frames.length; i++) {
             const frame = frames[i]
@@ -41,7 +43,7 @@ export async function gifToMp4({ file, ops, output }) {
             // A value of 0 is treated as 10 cs (100 ms) per the GIF spec.
             const delayS = (frame.animationDelay || 10) / 100
 
-            buildOps(frame, ops, output)
+            buildOps(frame, ops, output, ctx)
 
             if (i === 0) {
               // H.264 requires dimensions divisible by 2.
@@ -59,7 +61,7 @@ export async function gifToMp4({ file, ops, output }) {
         } catch (err) {
           reject({ message: err?.message ?? String(err), stderr: '' })
         }
-      })
+      }))
     } catch (err) {
       reject({ message: err?.message ?? String(err), stderr: '' })
     }

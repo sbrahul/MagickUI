@@ -33,6 +33,16 @@ export async function loadFont() {
   await fontLoading
 }
 
+// ImageMagick disposes an image when its read callback returns, so nesting the reads keeps
+// the watermark alive exactly as long as the base image.
+export function withImage(IM, bytes, fn) {
+  return bytes ? IM.read(bytes, fn) : fn(null)
+}
+
+export async function readLogo(ops) {
+  return ops.watermark?.file ? new Uint8Array(await ops.watermark.file.arrayBuffer()) : null
+}
+
 /**
  * Returns true if the file is an animated GIF (more than one frame).
  * Always resolves — never rejects.

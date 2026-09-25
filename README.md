@@ -8,13 +8,15 @@ All image processing runs locally in your browser via WebAssembly. **No image da
 
 ## Features
 
-- **Transform** — resize (fit / fill / exact / percent), crop, rotate, flip/flop, trim, auto-orient (EXIF)
-- **Color** — brightness/contrast, hue/saturation/brightness modulate, gamma, levels, auto-level, auto-gamma, grayscale, negate, normalize, sepia tone, colorspace
+- **Input** — JPEG, PNG, WebP, GIF, TIFF, BMP, HEIC/HEIF, AVIF, JPEG XL, PSD/PSB, ICO/CUR, TGA, QOI, EXR, HDR, PCX, DDS, JPEG 2000 (formats the browser cannot show are converted for display)
+- **Transform** — resize (fit / fill / exact / percent), crop, rotate, deskew, flip/flop, trim, auto-orient (EXIF)
+- **Color** — brightness/contrast, hue/saturation/brightness modulate, gamma, levels, local contrast (CLAHE), auto-level, auto-gamma, grayscale, negate, normalize, sepia tone, colorspace, black & white threshold, posterize
 - **Blur / Sharpen** — Gaussian blur, bilateral blur (edge-preserving), motion blur, sharpen, adaptive sharpen
-- **Effects** — charcoal, canny edge detect, solarize, oil paint, vignette, wave
-- **Annotate** — text overlay with gravity picker, font size, color, opacity, rotation, border
-- **Output** — JPEG / PNG / WebP / AVIF / TIFF / GIF; quality, progressive JPEG, lossless WebP, metadata strip, download
-- **Animated GIF → MP4** — export animated GIFs as H.264 MP4 video (client-side via WebCodecs); configurable loop count (1–10)
+- **Effects** — charcoal, canny edge detect, solarize, oil paint, vignette, wave, film grain
+- **Annotate** — text overlay (bundled Noto Sans) with gravity picker, font size, color, opacity, rotation, border
+- **Overlay** — make a colour transparent, drop shadow, image watermark (logo) with position, size and opacity
+- **Output** — JPEG / PNG / WebP / AVIF / JPEG XL / GIF / TIFF / BMP / ICO / PDF; quality, JPEG file size limit, progressive JPEG, lossless WebP, PNG/GIF colour reduction, background colour for formats without transparency, metadata strip, download
+- **Animated GIF** — keeps all frames when saved as GIF; export as H.264 MP4 video (client-side via WebCodecs) with a configurable loop count (1–10)
 - **Live preview** — instant wasm-rendered preview updates as you adjust sliders
 - **Mobile-first** — responsive layout with a slide-up bottom sheet on small screens
 - **Dark / light theme** toggle

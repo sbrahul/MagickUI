@@ -4,6 +4,7 @@ import { LabeledSlider } from '../ui/labeled-slider.jsx'
 import { Switch }        from '../ui/switch.jsx'
 
 const COLORSPACES = ['sRGB', 'Gray', 'HSL', 'CMYK', 'Lab']
+const THRESHOLD_METHODS = ['OTSU', 'Kapur', 'Triangle']
 
 const BINARY_OPS = [
   { key: 'grayscale',   label: 'Grayscale'       },
@@ -78,6 +79,19 @@ export function ColorTab() {
         )}
       </OpSection>
 
+      <OpSection label="Local contrast (CLAHE)"
+        enabled={!!ops.clahe}
+        onToggle={v => updateOp('clahe', v ? { tile: 12, clip: 3 } : null)}>
+        {ops.clahe && (
+          <div className="space-y-3">
+            <LabeledSlider label="Tile size" value={ops.clahe.tile}
+              onChange={v => updateOp('clahe', { ...ops.clahe, tile: v })} min={2} max={50} unit="%" />
+            <LabeledSlider label="Clip limit" value={ops.clahe.clip}
+              onChange={v => updateOp('clahe', { ...ops.clahe, clip: v })} min={1} max={10} step={0.1} />
+          </div>
+        )}
+      </OpSection>
+
       <OpSection label="Adjustments">
         <div className="space-y-2">
           <div className="flex gap-2 mb-1">
@@ -122,6 +136,50 @@ export function ColorTab() {
             className="w-full rounded bg-white/10 px-2 py-1.5 text-sm text-white">
             {COLORSPACES.map(cs => <option key={cs} value={cs}>{cs}</option>)}
           </select>
+        )}
+      </OpSection>
+
+      <OpSection label="Threshold (black & white)"
+        enabled={!!ops.threshold}
+        onToggle={v => updateOp('threshold', v ? { mode: 'manual', value: 50, method: 'OTSU' } : null)}>
+        {ops.threshold && (
+          <div className="space-y-3">
+            <div className="flex gap-1">
+              {['manual', 'auto'].map(m => (
+                <button key={m}
+                  onClick={() => updateOp('threshold', { ...ops.threshold, mode: m })}
+                  className={`flex-1 py-1 rounded text-xs capitalize ${ops.threshold.mode === m ? 'bg-blue-600 text-white' : 'bg-white/10 text-gray-300 hover:bg-white/20'}`}>
+                  {m}
+                </button>
+              ))}
+            </div>
+            {ops.threshold.mode === 'manual' ? (
+              <LabeledSlider label="Threshold" value={ops.threshold.value}
+                onChange={v => updateOp('threshold', { ...ops.threshold, value: v })} min={0} max={100} unit="%" />
+            ) : (
+              <select value={ops.threshold.method} aria-label="Threshold method"
+                onChange={e => updateOp('threshold', { ...ops.threshold, method: e.target.value })}
+                className="w-full rounded bg-white/10 px-2 py-1.5 text-sm text-white">
+                {THRESHOLD_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+            )}
+          </div>
+        )}
+      </OpSection>
+
+      <OpSection label="Posterize"
+        enabled={!!ops.quantize}
+        onToggle={v => updateOp('quantize', v ? { colors: 8, dither: false } : null)}>
+        {ops.quantize && (
+          <div className="space-y-3">
+            <LabeledSlider label="Colours" value={ops.quantize.colors}
+              onChange={v => updateOp('quantize', { ...ops.quantize, colors: v })} min={2} max={64} />
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-400">Dither</span>
+              <Switch checked={ops.quantize.dither}
+                onCheckedChange={v => updateOp('quantize', { ...ops.quantize, dither: v })} />
+            </div>
+          </div>
         )}
       </OpSection>
 

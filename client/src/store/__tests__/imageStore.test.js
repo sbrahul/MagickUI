@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { useImageStore } from '../../store/imageStore.js'
 
 // Reset store between tests
@@ -55,6 +55,14 @@ describe('imageStore – DEFAULT_OPS', () => {
     expect(ops).not.toHaveProperty('spread')
     expect(ops).not.toHaveProperty('swirl')
     expect(ops).not.toHaveProperty('implode')
+    expect(ops).not.toHaveProperty('posterize')
+  })
+
+  it('includes the new ops, off by default, and keeps posterize absent', () => {
+    const { ops } = useImageStore.getState()
+    for (const key of ['deskew', 'transparent', 'clahe', 'grain', 'threshold', 'quantize', 'shadow', 'watermark']) {
+      expect(ops).toHaveProperty(key, null)
+    }
     expect(ops).not.toHaveProperty('posterize')
   })
 
@@ -115,5 +123,89 @@ describe('imageStore – live preview', () => {
     expect(s.livePreviewEnabled).toBe(false)
     expect(s.livePreviewUrl).toBeNull()
     expect(s.isLivePreviewing).toBe(false)
+  })
+})
+
+describe('imageStore – processed result URLs', () => {
+  beforeEach(() => {
+    URL.revokeObjectURL = vi.fn()
+  })
+
+  it('setProcessed stores the file URL and the preview URL', () => {
+    useImageStore.getState().setProcessed({ blobUrl: 'blob:a', previewUrl: 'blob:a-prev', meta: { format: 'tiff' } })
+    const s = useImageStore.getState()
+    expect(s.processedBlobUrl).toBe('blob:a')
+    expect(s.processedPreviewUrl).toBe('blob:a-prev')
+    expect(s.showOriginal).toBe(false)
+  })
+
+  it('a second setProcessed revokes both old URLs', () => {
+    const { setProcessed } = useImageStore.getState()
+    setProcessed({ blobUrl: 'blob:a', previewUrl: 'blob:a-prev', meta: {} })
+    setProcessed({ blobUrl: 'blob:b', meta: {} })
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:a')
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:a-prev')
+    expect(useImageStore.getState().processedPreviewUrl).toBeNull()
+  })
+
+  it('cleanup revokes the preview URL', () => {
+    useImageStore.getState().setProcessed({ blobUrl: 'blob:a', previewUrl: 'blob:a-prev', meta: {} })
+    useImageStore.getState().cleanup()
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:a-prev')
+    expect(useImageStore.getState().processedPreviewUrl).toBeNull()
+  })
+})
+
+describe('imageStore – display conversion', () => {
+  beforeEach(() => {
+    URL.revokeObjectURL = vi.fn()
+  })
+
+  it('setDisplayUrl stores the converted image size', () => {
+    useImageStore.getState().setDisplayUrl('blob:converted', { width: 4000, height: 3000 })
+    const s = useImageStore.getState()
+    expect(s.originalBlobUrl).toBe('blob:converted')
+    expect(s.originalDimensions).toEqual({ width: 4000, height: 3000 })
+  })
+
+  it('setDecoding sets the flag', () => {
+    useImageStore.getState().setDecoding(true)
+    expect(useImageStore.getState().isDecoding).toBe(true)
+  })
+})
+
+describe('imageStore – watermark', () => {
+  beforeEach(() => {
+    let n = 0
+    URL.createObjectURL = vi.fn(() => `blob:wm${++n}`)
+    URL.revokeObjectURL = vi.fn()
+  })
+  const logo = name => new File([new Uint8Array([1])], name, { type: 'image/png' })
+
+  it('setWatermark stores the file with defaults and a URL', () => {
+    useImageStore.getState().setWatermark(logo('a.png'))
+    const wm = useImageStore.getState().ops.watermark
+    expect(wm).toMatchObject({ gravity: 'SouthEast', scale: 20, opacity: 70, url: 'blob:wm1' })
+    expect(wm.file.name).toBe('a.png')
+  })
+
+  it('replacing the logo keeps settings and revokes the old URL', () => {
+    const { setWatermark, updateOp } = useImageStore.getState()
+    setWatermark(logo('a.png'))
+    updateOp('watermark', { ...useImageStore.getState().ops.watermark, scale: 40 })
+    setWatermark(logo('b.png'))
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:wm1')
+    expect(useImageStore.getState().ops.watermark).toMatchObject({ scale: 40, url: 'blob:wm2' })
+  })
+
+  it('setWatermark(null), resetOps and setFile revoke the logo URL', () => {
+    const s = useImageStore.getState()
+    s.setWatermark(logo('a.png')); s.setWatermark(null)
+    expect(URL.revokeObjectURL).toHaveBeenLastCalledWith('blob:wm1')
+    expect(useImageStore.getState().ops.watermark).toBeNull()
+    s.setWatermark(logo('b.png')); useImageStore.getState().resetOps()
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:wm2')
+    useImageStore.getState().setWatermark(logo('c.png')); useImageStore.getState().setFile(null)
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:wm3')
   })
 })

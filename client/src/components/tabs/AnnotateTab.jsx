@@ -1,50 +1,18 @@
-import { HexColorPicker } from 'react-colorful'
-import { useState } from 'react'
 import { useImageStore }  from '../../store/imageStore.js'
 import { OpSection }      from '../ui/op-section.jsx'
 import { LabeledSlider }  from '../ui/labeled-slider.jsx'
-import { Switch }         from '../ui/switch.jsx'
 import { NumberInput }    from '../ui/number-input.jsx'
-
-const GRAVITY_GRID = [
-  ['NorthWest', 'North', 'NorthEast'],
-  ['West',      'Center', 'East'    ],
-  ['SouthWest', 'South', 'SouthEast'],
-]
-const GRAVITY_LABELS = {
-  NorthWest: 'NW', North: 'N', NorthEast: 'NE',
-  West: 'W', Center: 'C', East: 'E',
-  SouthWest: 'SW', South: 'S', SouthEast: 'SE',
-}
+import { ColorField }     from '../ui/color-field.jsx'
+import { GravityGrid }    from '../ui/gravity-grid.jsx'
 
 const ANNOTATE_DEFAULTS = {
   text: '', gravity: 'SouthEast', size: 36,
   color: '#ffffff', opacity: 100, x: 10, y: 10, rotation: 0,
 }
 
-// Sends only complete #rrggbb values; hexToMagickColor turns a partial one like "#ff" into NaN channels.
-function HexInput({ value, onChange, ...props }) {
-  const [text, setText] = useState(value)
-  const [prevValue, setPrevValue] = useState(value)
-  if (value !== prevValue) {
-    setPrevValue(value)
-    setText(value)
-  }
-
-  function handleChange(e) {
-    const next = e.target.value
-    if (!/^#[0-9a-fA-F]{0,6}$/.test(next)) return
-    setText(next)
-    if (next.length === 7) onChange(next)
-  }
-
-  return <input type="text" value={text} onChange={handleChange} {...props} />
-}
-
 export function AnnotateTab() {
   const ops      = useImageStore(s => s.ops)
   const updateOp = useImageStore(s => s.updateOp)
-  const [showPicker, setShowPicker] = useState(false)
 
   const ann = ops.annotate
 
@@ -76,17 +44,7 @@ export function AnnotateTab() {
         <>
           {/* Gravity */}
           <OpSection label="Position (Gravity)">
-            <div className="grid grid-cols-3 gap-1 w-fit mx-auto">
-              {GRAVITY_GRID.map(row =>
-                row.map(g => (
-                  <button key={g}
-                    onClick={() => update({ gravity: g })}
-                    className={`w-10 h-10 rounded text-xs font-medium transition-colors ${ann.gravity === g ? 'bg-blue-600 text-white' : 'bg-white/10 text-gray-400 hover:bg-white/20'}`}>
-                    {GRAVITY_LABELS[g]}
-                  </button>
-                ))
-              )}
-            </div>
+            <GravityGrid value={ann.gravity} onChange={g => update({ gravity: g })} />
           </OpSection>
 
           {/* Size */}
@@ -95,23 +53,7 @@ export function AnnotateTab() {
 
           {/* Color */}
           <OpSection label="Font colour">
-            <div className="space-y-2">
-              <button
-                onClick={() => setShowPicker(p => !p)}
-                className="flex items-center gap-2 text-xs text-gray-400 hover:text-white"
-              >
-                <span className="inline-block w-6 h-6 rounded border border-white/20"
-                  style={{ backgroundColor: ann.color }} />
-                {ann.color}
-              </button>
-              {showPicker && (
-                <div>
-                  <HexColorPicker color={ann.color} onChange={c => update({ color: c })} />
-                  <HexInput value={ann.color} onChange={c => update({ color: c })}
-                    className="mt-1 w-full rounded bg-white/10 px-2 py-1 text-xs text-white font-mono" />
-                </div>
-              )}
-            </div>
+            <ColorField label="Font colour" value={ann.color} onChange={c => update({ color: c })} />
           </OpSection>
 
           {/* Opacity */}

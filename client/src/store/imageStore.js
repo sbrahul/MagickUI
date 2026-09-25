@@ -33,7 +33,17 @@ const DEFAULT_OPS = {
   wave: null,
   border: null,
   annotate: null,
+  deskew: null,
+  transparent: null,
+  clahe: null,
+  grain: null,
+  threshold: null,
+  quantize: null,     // shown as "Posterize"; the old posterize op was removed with the wasm move
+  shadow: null,
+  watermark: null,
 }
+
+export const WATERMARK_DEFAULTS = { gravity: 'SouthEast', scale: 20, opacity: 70, x: 2, y: 2 }
 
 const DEFAULT_OUTPUT = {
   format: 'jpeg',
@@ -42,6 +52,14 @@ const DEFAULT_OUTPUT = {
   interlace: false,
   losslessWebp: false,
   videoLoops: 1,
+  jpegMaxKb: null,     // null = no size limit
+  colors: null,        // null = no colour reduction (png, gif)
+  dither: true,
+  flattenBg: '#ffffff', // fills transparent areas for formats without alpha
+}
+
+function revoke(...urls) {
+  for (const url of urls) if (url) URL.revokeObjectURL(url)
 }
 
 export const useImageStore = create((set, get) => ({
@@ -50,11 +68,13 @@ export const useImageStore = create((set, get) => ({
   originalDimensions: null,
   previewFile: null,        // downscaled File used for live preview only
   processedBlobUrl: null,
+  processedPreviewUrl: null, // displayable copy when the output format cannot be shown in <img>
   processedMeta: null,
   isProcessing: false,
   abortController: null,
   errorDetail: null,
   isAnimatedGif: false,
+  isDecoding: false,         // wasm is converting an input the browser cannot show
 
   // Live preview (temporary, cleared when Apply is pressed)
   livePreviewUrl: null,
@@ -68,25 +88,23 @@ export const useImageStore = create((set, get) => ({
 
 
   setFile(file) {
-    const prev = get().originalBlobUrl
-    if (prev) URL.revokeObjectURL(prev)
-    const prevP = get().processedBlobUrl
-    if (prevP) URL.revokeObjectURL(prevP)
+    const { originalBlobUrl, processedBlobUrl, processedPreviewUrl, livePreviewUrl, ops } = get()
+    revoke(originalBlobUrl, processedBlobUrl, processedPreviewUrl, livePreviewUrl, ops.watermark?.url)
     const blobUrl = file ? URL.createObjectURL(file) : null
-    const prevLive = get().livePreviewUrl
-    if (prevLive) URL.revokeObjectURL(prevLive)
     set({
       originalFile: file,
       originalBlobUrl: blobUrl,
       originalDimensions: null,
       previewFile: null,
       processedBlobUrl: null,
+      processedPreviewUrl: null,
       processedMeta: null,
       livePreviewUrl: null,
       isLivePreviewing: false,
       showOriginal: true,
       errorDetail: null,
       isAnimatedGif: false,
+      isDecoding: false,
       ops: { ...DEFAULT_OPS },
     })
     if (blobUrl) {
@@ -107,8 +125,7 @@ export const useImageStore = create((set, get) => ({
   },
 
   resetOps() {
-    const prevLive = get().livePreviewUrl
-    if (prevLive) URL.revokeObjectURL(prevLive)
+    revoke(get().livePreviewUrl, get().ops.watermark?.url)
     set({
       ops: { ...DEFAULT_OPS },
       livePreviewUrl: null,
@@ -117,17 +134,25 @@ export const useImageStore = create((set, get) => ({
     })
   },
 
+  // Use this, not updateOp('watermark', null), so the logo's blob URL is revoked.
+  setWatermark(file) {
+    const prev = get().ops.watermark
+    revoke(prev?.url)
+    const watermark = file
+      ? { ...WATERMARK_DEFAULTS, ...prev, file, url: URL.createObjectURL(file) }
+      : null
+    set(state => ({ ops: { ...state.ops, watermark } }))
+  },
+
   setLivePreview(blobUrl) {
-    const prev = get().livePreviewUrl
-    if (prev) URL.revokeObjectURL(prev)
+    revoke(get().livePreviewUrl)
     set({ livePreviewUrl: blobUrl, isLivePreviewing: blobUrl !== null })
   },
 
   toggleLivePreview() {
     const next = !get().livePreviewEnabled
     if (!next) {
-      const prev = get().livePreviewUrl
-      if (prev) URL.revokeObjectURL(prev)
+      revoke(get().livePreviewUrl)
       set({ livePreviewEnabled: false, livePreviewUrl: null, isLivePreviewing: false })
     } else {
       set({ livePreviewEnabled: true })
@@ -138,22 +163,31 @@ export const useImageStore = create((set, get) => ({
     set({ isProcessing, abortController })
   },
 
-  setProcessed(blobUrl, meta) {
-    const prev = get().processedBlobUrl
-    if (prev) URL.revokeObjectURL(prev)
-    const prevLive = get().livePreviewUrl
-    if (prevLive) URL.revokeObjectURL(prevLive)
-    set({ processedBlobUrl: blobUrl, processedMeta: meta, livePreviewUrl: null, isLivePreviewing: false, showOriginal: false, errorDetail: null })
+  setProcessed({ blobUrl, previewUrl = null, meta }) {
+    const { processedBlobUrl, processedPreviewUrl, livePreviewUrl } = get()
+    revoke(processedBlobUrl, processedPreviewUrl, livePreviewUrl)
+    set({
+      processedBlobUrl: blobUrl,
+      processedPreviewUrl: previewUrl,
+      processedMeta: meta,
+      livePreviewUrl: null,
+      isLivePreviewing: false,
+      showOriginal: false,
+      errorDetail: null,
+    })
   },
 
   setPreviewFile(file) {
     set({ previewFile: file })
   },
 
-  setDisplayUrl(blobUrl) {
-    const prev = get().originalBlobUrl
-    if (prev) URL.revokeObjectURL(prev)
-    set({ originalBlobUrl: blobUrl })
+  setDisplayUrl(blobUrl, dimensions) {
+    revoke(get().originalBlobUrl)
+    set({ originalBlobUrl: blobUrl, originalDimensions: dimensions ?? get().originalDimensions })
+  },
+
+  setDecoding(isDecoding) {
+    set({ isDecoding })
   },
 
   setIsAnimatedGif(val) {
@@ -171,10 +205,8 @@ export const useImageStore = create((set, get) => ({
   },
 
   cleanup() {
-    const { originalBlobUrl, processedBlobUrl, livePreviewUrl } = get()
-    if (originalBlobUrl) URL.revokeObjectURL(originalBlobUrl)
-    if (processedBlobUrl) URL.revokeObjectURL(processedBlobUrl)
-    if (livePreviewUrl) URL.revokeObjectURL(livePreviewUrl)
-    set({ originalBlobUrl: null, processedBlobUrl: null, livePreviewUrl: null })
+    const { originalBlobUrl, processedBlobUrl, processedPreviewUrl, livePreviewUrl, ops } = get()
+    revoke(originalBlobUrl, processedBlobUrl, processedPreviewUrl, livePreviewUrl, ops.watermark?.url)
+    set({ originalBlobUrl: null, processedBlobUrl: null, processedPreviewUrl: null, livePreviewUrl: null })
   },
 }))

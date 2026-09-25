@@ -189,6 +189,26 @@ export function TransformTab() {
         </div>
       </OpSection>
 
+      {/* Deskew */}
+      <OpSection
+        label="Deskew (straighten scans)"
+        enabled={!!ops.deskew}
+        onToggle={v => updateOp('deskew', v ? { threshold: 40, autoCrop: false } : null)}
+      >
+        {ops.deskew && (
+          <div className="space-y-3">
+            <LabeledSlider label="Threshold" value={ops.deskew.threshold}
+              onChange={v => updateOp('deskew', { ...ops.deskew, threshold: v })} min={0} max={100} unit="%" />
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-400">Auto-crop corners</span>
+              <Switch checked={ops.deskew.autoCrop}
+                onCheckedChange={v => updateOp('deskew', { ...ops.deskew, autoCrop: v })} />
+            </div>
+            <p className="text-xs text-gray-500">New corners use the Rotate background colour.</p>
+          </div>
+        )}
+      </OpSection>
+
       {/* Flip / Flop */}
       <OpSection label="Flip / Flop">
         <div className="space-y-2">
