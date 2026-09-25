@@ -20,6 +20,14 @@ export function TransformTab() {
   const imgRef   = useRef(null)
   const [lockAspect, setLockAspect] = useState(false)
 
+  // Local text so partial input like "-" is not overwritten with the store's number.
+  const [rotateText, setRotateText] = useState(String(ops.rotate))
+  const [prevRotate, setPrevRotate] = useState(ops.rotate)
+  if (ops.rotate !== prevRotate) {
+    setPrevRotate(ops.rotate)
+    setRotateText(String(ops.rotate))
+  }
+
   // Original image aspect ratio (width ÷ height) — used to constrain resize inputs
   const aspectRatio = originalDimensions
     ? originalDimensions.width / originalDimensions.height
@@ -73,6 +81,12 @@ export function TransformTab() {
 
   function handleRotateDelta(delta) {
     updateOp('rotate', (((ops.rotate ?? 0) + delta) % 360 + 360) % 360)
+  }
+
+  function handleRotateInput(text) {
+    setRotateText(text)
+    const n = Number(text)
+    if (text.trim() !== '' && Number.isFinite(n)) updateOp('rotate', n)
   }
 
   function handleModeChange(mode) {
@@ -174,8 +188,8 @@ export function TransformTab() {
           </div>
           <div className="flex items-center gap-2">
             <label className="text-xs text-gray-400 w-24 flex-shrink-0">Free rotate °</label>
-            <input type="number" min={-360} max={360} value={ops.rotate}
-              onChange={e => updateOp('rotate', Number(e.target.value))}
+            <input type="number" min={-360} max={360} value={rotateText}
+              onChange={e => handleRotateInput(e.target.value)}
               className="w-full rounded bg-white/10 px-2 py-1 text-sm text-white" />
           </div>
           <div className="flex items-center gap-2">
