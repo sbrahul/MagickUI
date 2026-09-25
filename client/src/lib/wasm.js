@@ -14,10 +14,10 @@ async function fetchBytes(url) {
 
 export async function getIM() {
   if (!initializing) {
-    initializing = fetch(wasmUrl)
-      .then(r => r.arrayBuffer())
-      .then(buf => initializeImageMagick(new Uint8Array(buf)))
+    initializing = fetchBytes(wasmUrl)
+      .then(bytes => initializeImageMagick(bytes))
       .then(() => ImageMagick)
+      .catch(err => { initializing = null; throw err })
   }
   await initializing
   return ImageMagick
@@ -41,13 +41,11 @@ export async function isAnimatedGif(file) {
   if (!file) return false
   const isGif = file.type === 'image/gif' || /\.gif$/i.test(file.name)
   if (!isGif) return false
-  const bytes = new Uint8Array(await file.arrayBuffer())
-  const IM = await getIM()
-  return new Promise(resolve => {
-    try {
-      IM.readCollection(bytes, frames => resolve(frames.length > 1))
-    } catch {
-      resolve(false)
-    }
-  })
+  try {
+    const bytes = new Uint8Array(await file.arrayBuffer())
+    const IM = await getIM()
+    return IM.readCollection(bytes, frames => frames.length > 1)
+  } catch {
+    return false
+  }
 }
