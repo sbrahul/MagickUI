@@ -59,7 +59,7 @@ export const useImageStore = create((set, get) => ({
   // Live preview (temporary, cleared when Apply is pressed)
   livePreviewUrl: null,
   isLivePreviewing: false,
-  livePreviewEnabled: false,
+  livePreviewEnabled: true,
 
   showOriginal: true,
 

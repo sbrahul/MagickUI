@@ -13,7 +13,7 @@ beforeEach(() => {
     errorDetail: null,
     livePreviewUrl: null,
     isLivePreviewing: false,
-    livePreviewEnabled: false,
+    livePreviewEnabled: true,
     showOriginal: true,
     ops: useImageStore.getState().ops,
     output: useImageStore.getState().output,
@@ -101,5 +101,19 @@ describe('imageStore – updateOutput', () => {
     const { updateOutput } = useImageStore.getState()
     updateOutput('format', 'webp')
     expect(useImageStore.getState().output.format).toBe('webp')
+  })
+})
+
+describe('imageStore – live preview', () => {
+  it('is enabled by default', () => {
+    expect(useImageStore.getState().livePreviewEnabled).toBe(true)
+  })
+
+  it('toggleLivePreview turns it off and clears the preview URL', () => {
+    useImageStore.getState().toggleLivePreview()
+    const s = useImageStore.getState()
+    expect(s.livePreviewEnabled).toBe(false)
+    expect(s.livePreviewUrl).toBeNull()
+    expect(s.isLivePreviewing).toBe(false)
   })
 })
