@@ -82,6 +82,7 @@ export const useImageStore = create((set, get) => ({
   livePreviewEnabled: true,
 
   showOriginal: true,
+  lockAspect: false,          // resize "Maintain aspect ratio"; kept here so it survives tab switches
 
   ops: { ...DEFAULT_OPS },
   output: { ...DEFAULT_OUTPUT },
@@ -105,7 +106,10 @@ export const useImageStore = create((set, get) => ({
       errorDetail: null,
       isAnimatedGif: false,
       isDecoding: false,
+      livePreviewEnabled: true,
+      lockAspect: false,
       ops: { ...DEFAULT_OPS },
+      output: { ...DEFAULT_OUTPUT },
     })
     if (blobUrl) {
       const img = new Image()
@@ -118,6 +122,10 @@ export const useImageStore = create((set, get) => ({
 
   updateOp(key, value) {
     set(state => ({ ops: { ...state.ops, [key]: value } }))
+  },
+
+  setLockAspect(lockAspect) {
+    set({ lockAspect })
   },
 
   updateOutput(key, value) {

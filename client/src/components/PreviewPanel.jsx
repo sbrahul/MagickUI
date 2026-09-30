@@ -16,7 +16,13 @@ export function PreviewPanel() {
   const isProcessing       = useImageStore(s => s.isProcessing)
   const isDecoding         = useImageStore(s => s.isDecoding)
   const togglePreview      = useImageStore(s => s.togglePreview)
+  const originalFile       = useImageStore(s => s.originalFile)
   const [zoom, setZoom]    = useState(1)
+  const [prevFile, setPrevFile] = useState(originalFile)
+  if (originalFile !== prevFile) {
+    setPrevFile(originalFile)
+    setZoom(1)
+  }
 
   // Priority: live preview > applied result > original
   const showingProcessed = !livePreviewUrl && !showOriginal

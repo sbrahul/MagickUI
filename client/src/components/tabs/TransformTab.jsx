@@ -8,6 +8,11 @@ import { Switch }         from '../ui/switch.jsx'
 import { NumberInput }    from '../ui/number-input.jsx'
 
 const MODES = ['fit', 'fill', 'exact', 'percent']
+const FULL_CROP = { unit: '%', x: 0, y: 0, width: 100, height: 100 }
+
+function toPercentCrop(c) {
+  return c ? { unit: '%', x: c.x * 100, y: c.y * 100, width: c.width * 100, height: c.height * 100 } : FULL_CROP
+}
 
 export function TransformTab() {
   const ops          = useImageStore(s => s.ops)
@@ -16,10 +21,18 @@ export function TransformTab() {
   const output       = useImageStore(s => s.output)
   const originalBlobUrl    = useImageStore(s => s.originalBlobUrl)
   const originalDimensions = useImageStore(s => s.originalDimensions)
+  const originalFile       = useImageStore(s => s.originalFile)
+  const lockAspect         = useImageStore(s => s.lockAspect)
+  const setLockAspect      = useImageStore(s => s.setLockAspect)
 
-  const [crop, setCrop] = useState({ unit: '%', x: 0, y: 0, width: 100, height: 100 })
+  // Radix unmounts hidden tabs, so start from the saved crop rather than the full image.
+  const [crop, setCrop] = useState(() => toPercentCrop(ops.crop))
   const imgRef   = useRef(null)
-  const [lockAspect, setLockAspect] = useState(false)
+  const [prevFile, setPrevFile] = useState(originalFile)
+  if (originalFile !== prevFile) {
+    setPrevFile(originalFile)
+    setCrop(FULL_CROP)
+  }
 
   // Original image aspect ratio (width ÷ height) — used to constrain resize inputs
   const aspectRatio = originalDimensions
@@ -148,11 +161,14 @@ export function TransformTab() {
       <OpSection
         label="Crop"
         enabled={!!ops.crop}
-        onToggle={v => updateOp('crop', v ? { x: 0, y: 0, width: 1, height: 1 } : null)}
+        onToggle={v => {
+          setCrop(FULL_CROP)
+          updateOp('crop', v ? { x: 0, y: 0, width: 1, height: 1 } : null)
+        }}
       >
         {ops.crop && originalBlobUrl && (
           <div className="space-y-1">
-            <ReactCrop crop={crop} onChange={c => setCrop(c)} onComplete={onCropComplete}>
+            <ReactCrop crop={crop} onChange={(_, percentCrop) => setCrop(percentCrop)} onComplete={onCropComplete}>
               <img ref={imgRef} src={originalBlobUrl} alt="crop" className="w-full rounded" />
             </ReactCrop>
             <p className="text-xs text-gray-500 text-center">

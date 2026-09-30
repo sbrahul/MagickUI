@@ -112,6 +112,24 @@ describe('imageStore – updateOutput', () => {
   })
 })
 
+describe('imageStore – setFile', () => {
+  it('resets ops, output settings, the live preview switch and the aspect lock', () => {
+    const s = useImageStore.getState()
+    const defaults = { ops: s.ops, output: s.output }
+    s.updateOp('crop', { x: 0.1, y: 0.1, width: 0.5, height: 0.5 })
+    s.updateOutput('format', 'webp')
+    s.updateOutput('quality', 40)
+    s.toggleLivePreview()
+    s.setLockAspect(true)
+    useImageStore.getState().setFile(null)
+    const after = useImageStore.getState()
+    expect(after.ops).toEqual(defaults.ops)
+    expect(after.output).toEqual(defaults.output)
+    expect(after.livePreviewEnabled).toBe(true)
+    expect(after.lockAspect).toBe(false)
+  })
+})
+
 describe('imageStore – live preview', () => {
   it('is enabled by default', () => {
     expect(useImageStore.getState().livePreviewEnabled).toBe(true)
